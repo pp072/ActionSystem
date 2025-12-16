@@ -1,0 +1,100 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06a2693a5451423cab98273cdb88292e, type: 3}
+  m_Name: VariablesScriptableObject
+  m_EditorClassIdentifier: Assembly-CSharp::Variable.VariablesScriptableObject
+  Variables:
+  - Name: Health
+    index: 0
+    Var:
+      Value:
+        HasValue: 1
+        IntValue: 50
+        BoolValue: 0
+        FloatValue: 50
+        StringValue: 
+        Type: 3
+    StartValue:
+      HasValue: 0
+      IntValue: 50
+      BoolValue: 0
+      FloatValue: 50
+      StringValue: 
+      Type: 3
+  - Name: Health2
+    index: 1
+    Var:
+      Value:
+        HasValue: 1
+        IntValue: 83
+        BoolValue: 0
+        FloatValue: 85.5
+        StringValue: 
+        Type: 3
+    StartValue:
+      HasValue: 0
+      IntValue: 83
+      BoolValue: 0
+      FloatValue: 85.5
+      StringValue: 
+      Type: 3
+  - Name: Health2
+    index: 2
+    Var:
+      Value:
+        HasValue: 1
+        IntValue: 50
+        BoolValue: 0
+        FloatValue: 0
+        StringValue: 
+        Type: 1
+    StartValue:
+      HasValue: 0
+      IntValue: 50
+      BoolValue: 0
+      FloatValue: 0
+      StringValue: 
+      Type: 1
+  - Name: Health2
+    index: 3
+    Var:
+      Value:
+        HasValue: 1
+        IntValue: 50
+        BoolValue: 0
+        FloatValue: 0
+        StringValue: 
+        Type: 1
+    StartValue:
+      HasValue: 0
+      IntValue: 50
+      BoolValue: 0
+      FloatValue: 0
+      StringValue: 
+      Type: 1
+  - Name: Health2
+    index: 4
+    Var:
+      Value:
+        HasValue: 1
+        IntValue: 50
+        BoolValue: 0
+        FloatValue: 0
+        StringValue: 
+        Type: 1
+    StartValue:
+      HasValue: 0
+      IntValue: 50
+      BoolValue: 0
+      FloatValue: 0
+      StringValue: 
+      Type: 1
