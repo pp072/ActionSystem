@@ -10,6 +10,7 @@ namespace ActionSystem
     {
         public string Name { get; set; } = "Send Event";
         [SerializeField] private UnityEvent _floatDrivenTarget;
+        public void Validate(int index) { }
         public void Init()
         {
             

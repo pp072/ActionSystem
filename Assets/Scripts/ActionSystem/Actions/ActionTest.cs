@@ -12,7 +12,7 @@ namespace ActionSystem
         [SerializeField] private Color _color;
         [SerializeField] private bool Enable = true;
         [SerializeField] private FloatField  _floatField;
-
+        public void Validate(int index) { }
         public void Init()
         {
             

@@ -34,7 +34,11 @@ namespace ActionSystem
         [SerializeReference, SerializeReferenceDropdown, DisableIf(nameof(IsSkip)), AllowNesting ]
         private IActionItem _actionItem;
         
+        [Space]
         [SerializeField] 
+        private bool AdvancedRunType = false;
+        
+        [SerializeField, ShowIf(nameof(AdvancedRunType)), AllowNesting] 
         private RunType RunType = RunType.Wait;
         
         [SerializeField, ShowIf(nameof(IsRunTypeWaitUntil)), AllowNesting] 
@@ -44,7 +48,7 @@ namespace ActionSystem
         private int GoTo;
 
         public bool IsSkip => RunType == RunType.Skip;
-        public bool IsRunTypeWaitUntil => RunType == RunType.Wait;
+        public bool IsRunTypeWaitUntil => RunType == RunType.Wait && AdvancedRunType;
         public bool IsFinishTypeGoTo => FinishType ==  FinishType.GoTo;
         public IActionItem ActionItem => _actionItem;
         public RunType GetRunType => RunType;
@@ -67,7 +71,21 @@ namespace ActionSystem
         public void Validate(int index)
         {
             if(_actionItem == null) return;
-            _name = index + ": " + _actionItem.Name + (RunType == RunType.Skip ? "  SKIP" :"")  ;
+            var goTo = "";
+            if (IsFinishTypeGoTo)
+            {
+                foreach (var actionInfo in ActionNodesList)
+                {
+                    if (actionInfo.index == GetGoTo)
+                    {
+                        goTo = " Go to -> " +" "+ actionInfo.name;
+                    }
+                }
+            }
+
+            _name = index + ": " + _actionItem.Name + (RunType == RunType.Skip ? "  SKIP" :"") + goTo;
+           
+            _actionItem.Validate(index);
         }
         
         public void Init()

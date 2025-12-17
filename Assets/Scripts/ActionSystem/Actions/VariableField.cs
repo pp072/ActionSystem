@@ -14,10 +14,12 @@ namespace Actions
         [SerializeField, ShowIf(nameof(_varNotFromList)), AllowNesting]private string _var;
         [SerializeField, ShowIf(nameof(_varNotFromList)), AllowNesting]public VariantType type;
     
-        VariablesScriptableObject VSO => VariablesScriptableObject.instance;
+        [SerializeField]VariablesScriptableObject VSO;
         public DropdownList<Variable.Variable> GetAllVariables()
         {
             var list = new DropdownList<Variable.Variable>();
+            if (VSO == null)
+                return null;
             foreach (var parameter in VSO.Variables)
             {
                 list.Add($"[Var:{parameter.index}] {parameter.Name} {parameter.Var.Value.Type.ToString()} {parameter.Var.ValueToString()} " 

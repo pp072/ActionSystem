@@ -16,9 +16,7 @@ namespace Variable
         public VariantParameter Var;
         public Variant StartValue; 
     }
-    [CreateAssetMenu(fileName = "VariablesScriptableObject", menuName = "Actions/VariablesScriptableObject", order = -100)]
-    [FilePath("Prefabs/VariablesScriptableObject.asset", FilePathAttribute.Location.PreferencesFolder)]
-    public class VariablesScriptableObject : ScriptableSingleton<VariablesScriptableObject>
+    public class VariablesScriptableObject : ScriptableObject
     {
         public List<Variable> Variables = new List<Variable>();
 
@@ -108,11 +106,6 @@ namespace Variable
 
             value = "";
             return false;
-        }
-
-        public VariablesScriptableObject GetInstance()
-        {
-            throw new NotImplementedException();
         }
     }
 }

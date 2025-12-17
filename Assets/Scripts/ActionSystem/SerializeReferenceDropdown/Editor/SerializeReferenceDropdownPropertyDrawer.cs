@@ -18,7 +18,20 @@ namespace SerializeReferenceDropdown.Editor
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            return EditorGUI.GetPropertyHeight(property, label, true);
+            float height = EditorGUIUtility.singleLineHeight;
+
+            var child = property.Copy();
+            var end = child.GetEndProperty();
+
+            child.NextVisible(true);
+            while (!SerializedProperty.EqualContents(child, end))
+            {
+                height += EditorGUI.GetPropertyHeight(child, true)
+                          + EditorGUIUtility.standardVerticalSpacing;
+                child.NextVisible(false);
+            }
+
+            return height;
         }
 
         public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
@@ -27,7 +40,7 @@ namespace SerializeReferenceDropdown.Editor
             GUI.Box(rect, "");
             EditorGUI.BeginProperty(rect, label, property);
 
-            var indent = EditorGUI.indentLevel;
+            var indent = EditorGUI.indentLevel --;
             EditorGUI.indentLevel = 0;
 
             if (property.propertyType == SerializedPropertyType.ManagedReference)
@@ -36,56 +49,65 @@ namespace SerializeReferenceDropdown.Editor
             }
             else
             {
-                EditorGUI.PropertyField(rect, property, label, true);
+                //EditorGUI.PropertyField(rect, property, label, true);
             }
 
-            EditorGUI.indentLevel = indent;
+            EditorGUI.indentLevel = indent ++;
             EditorGUI.EndProperty();
         }
         
         private void DrawIMGUITypeDropdown(Rect rect, SerializedProperty property, GUIContent label)
         {
-            const float fixButtonWidth = 40f;
             assignableTypes ??= GetAssignableTypes(property);
-            rect.x += 15;
-            Rect dropdownRect = new Rect(rect);
-            dropdownRect.width -= EditorGUIUtility.labelWidth + 40;
-            dropdownRect.x += EditorGUIUtility.labelWidth - 15;
-            dropdownRect.height = EditorGUIUtility.singleLineHeight;
-            var referenceType = ReflectionUtils.ExtractTypeFromString(property.managedReferenceFullTypename);
-            
-            var isHaveOtherReference = IsHaveSameOtherSerializeReference(property, out _);
-            
-            
-            //GUI.backgroundColor = Color.white;
-            if (EditorGUI.DropdownButton(dropdownRect, new GUIContent(GetActionName(referenceType)), FocusType.Keyboard))
+
+            property.isExpanded = true; // keep children visible
+
+            // ---- HEADER LINE (NO ARROW) ----
+            var line = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
+
+            EditorGUI.LabelField(line, label);
+
+            Rect dropdownRect = line;
+            dropdownRect.x += EditorGUIUtility.labelWidth;
+            dropdownRect.width -= EditorGUIUtility.labelWidth;
+
+            var referenceType =
+                ReflectionUtils.ExtractTypeFromString(property.managedReferenceFullTypename);
+
+            if (EditorGUI.DropdownButton(
+                    dropdownRect,
+                    new GUIContent(GetActionName(referenceType)),
+                    FocusType.Keyboard))
             {
-                var dropdown = new SerializeReferenceDropdownAdvancedDropdown(new AdvancedDropdownState(),
+                var dropdown = new SerializeReferenceDropdownAdvancedDropdown(
+                    new AdvancedDropdownState(),
                     assignableTypes,
                     index => WriteNewInstanceByIndexType(index, property));
+
                 dropdown.Show(dropdownRect);
             }
-            
-            if (isHaveOtherReference)
+
+            // ---- CHILDREN (normal arrows preserved) ----
+            EditorGUI.indentLevel++;
+
+            var child = property.Copy();
+            var end = child.GetEndProperty();
+
+            line.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+
+            child.NextVisible(true);
+            while (!SerializedProperty.EqualContents(child, end))
             {
-                // GUI.backgroundColor = Color.brown;
-                // if (GUI.Button(GetFixCrossReferencesRect(dropdownRect), "Fix"))
-                {
-                    FixCrossReference(property);
-                }
+                var h = EditorGUI.GetPropertyHeight(child, true);
+                line.height = h;
+
+                EditorGUI.PropertyField(line, child, true);
+
+                line.y += h + EditorGUIUtility.standardVerticalSpacing;
+                child.NextVisible(false);
             }
-            // GUI.backgroundColor = Color.aliceBlue;
-            // GUI.Box(rect,"");
-            // GUI.backgroundColor = Color.white;
-            EditorGUI.PropertyField(rect, property, label, true);
-            
-            Rect GetFixCrossReferencesRect(Rect rectIn)
-            {
-                var newRect = rectIn;
-                newRect.x += rectIn.width + EditorGUIUtility.standardVerticalSpacing;
-                newRect.width = fixButtonWidth - EditorGUIUtility.standardVerticalSpacing;
-                return newRect;
-            }
+
+            EditorGUI.indentLevel--;
         }
         
         private void FixCrossReference(SerializedProperty property)
@@ -234,6 +256,7 @@ namespace SerializeReferenceDropdown.Editor
             property.managedReferenceValue = value;
             property.serializedObject.ApplyModifiedProperties();
             property.serializedObject.Update();
+            //property.isExpanded = true;
         }
     }
 }

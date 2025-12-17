@@ -18,6 +18,7 @@ namespace ActionSystem
         [SerializeField] private ActionList _actionList;
         [SerializeField] private ActionListCommand _actionListCommand;
 
+        public void Validate(int index) { }
         public void Init(){}
 
         public async UniTask<bool> Run()

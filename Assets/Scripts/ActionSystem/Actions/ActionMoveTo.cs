@@ -39,7 +39,7 @@ namespace ActionSystem
         bool IsShowScaleVector =>Scale && ScaleRef == null ;
 
         private bool isComplete = false;
-        
+        public void Validate(int index) { }
         public void Init(){}
 
         public async UniTask<bool> Run()

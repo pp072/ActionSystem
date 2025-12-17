@@ -8,6 +8,8 @@ namespace ActionSystem
     public class ActionDebugLog : IActionItem
     {
         [HideInInspector]public string Name { get; set; } = "Debug Log";
+        public void Validate(int index) { }
+
         [SerializeField] private string Debug;
         [SerializeField] private bool Enable;
 

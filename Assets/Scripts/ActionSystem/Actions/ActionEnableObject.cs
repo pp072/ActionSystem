@@ -11,6 +11,7 @@ namespace ActionSystem
         [SerializeField] private GameObject _gameObject;
         [SerializeField] private bool Enable = true;
 
+        public void Validate(int index) { }
         public void Init()
         {
             

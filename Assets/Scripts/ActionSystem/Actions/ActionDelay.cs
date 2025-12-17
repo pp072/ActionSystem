@@ -10,6 +10,7 @@ namespace ActionSystem
         [HideInInspector]public string Name { get; set; } = "Delay";
         [SerializeField] private float Delay;
 
+        public void Validate(int index) { }
         public void Init(){}
 
         public async UniTask<bool> Run()

@@ -34,7 +34,7 @@ namespace ActionSystem
         [SerializeField] private ActionList _FALSE;
         [SerializeField] private ActionListCommand _actionListFalseCommand;
         
-        
+        public void Validate(int index) { }
         public void Init() {}
         
         public async UniTask<bool> Run()

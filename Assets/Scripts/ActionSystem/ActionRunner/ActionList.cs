@@ -27,6 +27,12 @@ namespace ActionSystem
             Pause = false;
         }
         
+        [Button()]
+        public void ExpandAll()
+        {
+            //var listProp = serializedObject.FindProperty("_actionItems");
+        }
+        
         public void Stop()
         {
             Stopped = true;

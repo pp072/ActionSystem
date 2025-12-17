@@ -19,7 +19,7 @@ namespace ActionSystem
         [SerializeField] private CollisionType _collisionType = CollisionType.Enter;
         
         private bool _isTriggered = false;
-
+        public void Validate(int index) { }
         public void Init()
         {
             var d = Disposable.CreateBuilder();

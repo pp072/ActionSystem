@@ -11,7 +11,7 @@ namespace ActionSystem
     {
         public string InputValue;
         public float Value => GetValue();
-        private VariablesScriptableObject Vso => VariablesScriptableObject.instance;
+        public VariablesScriptableObject Vso;
         private float GetValue()
         {
             if (Vso.TryGetFloatVarFromString(InputValue,  out float value))
@@ -30,7 +30,7 @@ namespace ActionSystem
         
         public int Value => GetValue();
 
-        private VariablesScriptableObject Vso => VariablesScriptableObject.instance;
+        public VariablesScriptableObject Vso;
         private int GetValue()
         {
             if (Vso.TryGetIntVarFromString(InputValue,  out int value))
@@ -50,7 +50,7 @@ namespace ActionSystem
         [SerializeField, HideInInspector]
         public string Value => GetValue();
 
-        private VariablesScriptableObject Vso => VariablesScriptableObject.instance;
+        public VariablesScriptableObject Vso;
         private string GetValue()
         {
             if (Vso.TryGetStringVarFromString(InputValue,  out string value))

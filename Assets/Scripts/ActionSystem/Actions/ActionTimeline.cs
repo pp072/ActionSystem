@@ -18,7 +18,7 @@ namespace ActionSystem
         [HideInInspector]public string Name { get; set; } = "TimelineControl";
         [SerializeField] private PlayableDirector _playableDirector;
         [SerializeField] private TimelineControlType _controlType;
-
+        public void Validate(int index) { }
         public void Init(){}
 
         public async UniTask<bool> Run()
