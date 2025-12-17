@@ -73,6 +73,8 @@ namespace SerializeReferenceDropdown.Editor
 
             var referenceType =
                 ReflectionUtils.ExtractTypeFromString(property.managedReferenceFullTypename);
+            
+            var isHaveOtherReference = IsHaveSameOtherSerializeReference(property, out _);
 
             if (EditorGUI.DropdownButton(
                     dropdownRect,
@@ -85,6 +87,15 @@ namespace SerializeReferenceDropdown.Editor
                     index => WriteNewInstanceByIndexType(index, property));
 
                 dropdown.Show(dropdownRect);
+            }
+            
+            if (isHaveOtherReference)
+            {
+                // GUI.backgroundColor = Color.brown;
+                // if (GUI.Button(GetFixCrossReferencesRect(dropdownRect), "Fix"))
+                {
+                    FixCrossReference(property);
+                }
             }
 
             // ---- CHILDREN (normal arrows preserved) ----
