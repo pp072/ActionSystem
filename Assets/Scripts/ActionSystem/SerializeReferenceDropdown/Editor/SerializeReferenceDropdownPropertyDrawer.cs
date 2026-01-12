@@ -61,6 +61,7 @@ namespace SerializeReferenceDropdown.Editor
             assignableTypes ??= GetAssignableTypes(property);
 
             property.isExpanded = true; // keep children visible
+            InspectorRepaintScheduler.Request();
 
             // ---- HEADER LINE (NO ARROW) ----
             var line = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);

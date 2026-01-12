@@ -1,22 +1,20 @@
 using ActionSystem;
+using NaughtyAttributes.Editor;
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(ActionList))] // Replace with your MonoBehaviour or ScriptableObject
-public class ActionItemInspector : Editor
+[CustomEditor(typeof(ActionList), true)]
+public class ActionItemInspector : NaughtyInspector
 {
     public override void OnInspectorGUI()
     {
+        base.OnInspectorGUI();
         serializedObject.Update();
-
         var listProp = serializedObject.FindProperty("Actions");
 
         // Draw expand/collapse buttons
         DrawExpandCollapseButtons(listProp);
 
-        // Draw the list with your property drawer
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("_runOnAwake"), true);
-        EditorGUILayout.PropertyField(listProp, true);
 
         serializedObject.ApplyModifiedProperties();
     }
