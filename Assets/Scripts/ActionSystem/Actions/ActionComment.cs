@@ -4,19 +4,18 @@ using UnityEngine;
 
 namespace ActionSystem
 {
-    [Serializable, ActionMenuPathAttribute("Debug"), ActionName("Comment")]
-    public class ActionComment : IActionItem
+    [Serializable, ActionMenuPath("Debug/Comment",  0.5f, 0.5f, 0.3f, 0.5f)]
+    public class ActionComment : ActionItemBase
     {
-        [SerializeField]private string Comment = "";
-        [HideInInspector]public string Name { get; set; } = "Comment";
-        public void Validate(int index)
+        [SerializeField] 
+        private string Comment = "";
+
+        public override void Validate(int index)
         {
-            Name = Comment;
+            Name = string.IsNullOrEmpty(Comment) ? "Comment" : Comment;
         }
 
-        public void Init(){}
-
-        public async UniTask<bool> Run()
+        public override async UniTask<bool> Run()
         {
             return true;
         }

@@ -214,13 +214,13 @@ namespace SerializeReferenceDropdown.Editor
             var typesWithMenuPath = TypeCache.GetTypesWithAttribute(typeof(ActionMenuPathAttribute));
             if (typesWithMenuPath.Contains(type))
             {
-                var tooltipAttribute = type.GetCustomAttribute<ActionMenuPathAttribute>();
-                return tooltipAttribute.tooltip;
+                var attr = type.GetCustomAttribute<ActionMenuPathAttribute>();
+                return attr.MenuPath;
             }
 
             return String.Empty;
         }
-        
+
         public static string GetActionName(Type type)
         {
             if (type == null)
@@ -228,11 +228,11 @@ namespace SerializeReferenceDropdown.Editor
                 return String.Empty;
             }
 
-            var typesWithTooltip = TypeCache.GetTypesWithAttribute(typeof(ActionNameAttribute));
-            if (typesWithTooltip.Contains(type))
+            var typesWithMenuPath = TypeCache.GetTypesWithAttribute(typeof(ActionMenuPathAttribute));
+            if (typesWithMenuPath.Contains(type))
             {
-                var tooltipAttribute = type.GetCustomAttribute<ActionNameAttribute>();
-                return tooltipAttribute.tooltip;
+                var attr = type.GetCustomAttribute<ActionMenuPathAttribute>();
+                return attr.Name;
             }
 
             return String.Empty;

@@ -4,18 +4,15 @@ using UnityEngine;
 
 namespace ActionSystem
 {
-    [Serializable, ActionMenuPathAttribute("Time"), ActionName("Delay")]
-    public class ActionDelay : IActionItem
+    [Serializable, ActionMenuPath("Time/Delay")]
+    public class ActionDelay : ActionItemBase
     {
-        [HideInInspector]public string Name { get; set; } = "Delay";
-        [SerializeField] private float Delay;
+        [SerializeField] private FloatRef _delay;
 
-        public void Validate(int index) { }
-        public void Init(){}
-
-        public async UniTask<bool> Run()
+        public override async UniTask<bool> Run()
         {
-            await Awaitable.WaitForSecondsAsync(Delay);
+            var delay = _delay.GetValue(Context);
+            await Awaitable.WaitForSecondsAsync(delay);
             return true;
         }
     }

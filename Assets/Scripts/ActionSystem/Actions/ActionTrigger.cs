@@ -1,10 +1,8 @@
 using System;
 using Cysharp.Threading.Tasks;
 using NaughtyAttributes;
-using NUnit.Framework.Constraints;
 using UnityEngine;
-using R3;
-using R3.Triggers;
+
 namespace ActionSystem
 {
     public enum CollisionType
@@ -13,61 +11,100 @@ namespace ActionSystem
         Exit,
         Stay
     }
-    [Serializable, ActionMenuPathAttribute("Object"), ActionName("Trigger")]
-    public class ActionTrigger : IActionItem
+
+    [Serializable, ActionMenuPath("Object/Trigger")]
+    public class ActionTrigger : ActionItemBase
     {
-        [HideInInspector]public string Name { get; set; } = "Trigger";
-        [SerializeField] private GameObject TriggerObject;
-        [SerializeField] private bool DetectCollideWithAll = true;
-        [SerializeField, HideIf(nameof(DetectCollideWithAll)), AllowNesting] 
-        private Collider SpecificCollider;
+        [SerializeField] private GameObjectRef _triggerObject;
+        [SerializeField] private bool _detectCollideWithAll;
+        [SerializeField, HideIf(nameof(_detectCollideWithAll)),AllowNesting] 
+        private ComponentRef<Collider> _specificCollider;
         [SerializeField] private CollisionType _collisionType = CollisionType.Enter;
-        
-        private bool _isTriggered = false;
-        public void Validate(int index) { }
-        public void Init()
+        [SerializeField, Tooltip("If true, Exit requires Enter first, and Enter requires Exit first")]
+        private bool _requireStateTransition;
+
+        private bool _isTriggered;
+        private bool _hasOppositeState;
+        private Collider _resolvedSpecificCollider;
+        private bool _resolvedDetectAll;
+        private TriggerListener _listener;
+
+        public override void Init()
         {
-            var d = Disposable.CreateBuilder();
+            _isTriggered = false;
+            _hasOppositeState = false;
+
+            var resolvedTriggerObject = _triggerObject.GetValue(Context);
+            _resolvedSpecificCollider = _specificCollider.GetValue(Context);
+            _resolvedDetectAll = _detectCollideWithAll;
+
+            if (resolvedTriggerObject == null) return;
+
+            _listener = ComponentUtils.GetOrAdd<TriggerListener>(resolvedTriggerObject);
+
             switch (_collisionType)
             {
                 case CollisionType.Enter:
-                    TriggerObject.OnTriggerEnterAsObservable()
-                        .Subscribe(CheckCollide).AddTo(ref d);
-                    TriggerObject.OnTriggerExitAsObservable()
-                        .Subscribe(CheckNonCollide).AddTo(ref d);
+                    _listener.OnEnter += CheckCollide;
+                    _listener.OnExit += CheckNonCollide;
                     break;
                 case CollisionType.Exit:
-                    TriggerObject.OnTriggerEnterAsObservable()
-                        .Subscribe(CheckNonCollide).AddTo(ref d);
-                    TriggerObject.OnTriggerExitAsObservable()
-                        .Subscribe(CheckCollide).AddTo(ref d);
+                    _listener.OnEnter += CheckNonCollide;
+                    _listener.OnExit += CheckCollide;
                     break;
                 case CollisionType.Stay:
-                    TriggerObject.OnTriggerStayAsObservable()
-                        .Subscribe(CheckCollide).AddTo(ref d);
-                    TriggerObject.OnTriggerExitAsObservable()
-                        .Subscribe(CheckNonCollide).AddTo(ref d);
+                    _listener.OnStay += CheckCollide;
+                    _listener.OnExit += CheckNonCollide;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            d.RegisterTo(TriggerObject.GetCancellationTokenOnDestroy()); // Build and Register
+        }
+
+        public override void Cleanup()
+        {
+            if (_listener == null) return;
+
+            switch (_collisionType)
+            {
+                case CollisionType.Enter:
+                    _listener.OnEnter -= CheckCollide;
+                    _listener.OnExit -= CheckNonCollide;
+                    break;
+                case CollisionType.Exit:
+                    _listener.OnEnter -= CheckNonCollide;
+                    _listener.OnExit -= CheckCollide;
+                    break;
+                case CollisionType.Stay:
+                    _listener.OnStay -= CheckCollide;
+                    _listener.OnExit -= CheckNonCollide;
+                    break;
+            }
+
+            _listener = null;
         }
 
         private void CheckCollide(Collider x)
         {
-            if(DetectCollideWithAll || x == SpecificCollider)
-                _isTriggered = true;
-        }
-        private void CheckNonCollide(Collider x)
-        {
-            if(DetectCollideWithAll || x == SpecificCollider)
-                _isTriggered = false;
+            if (_resolvedDetectAll || x == _resolvedSpecificCollider)
+            {
+                if (!_requireStateTransition || _hasOppositeState)
+                    _isTriggered = true;
+            }
         }
 
-        public async UniTask<bool> Run()
+        private void CheckNonCollide(Collider x)
         {
-            await UniTask.WaitUntil(()=>_isTriggered);
+            if (_resolvedDetectAll || x == _resolvedSpecificCollider)
+            {
+                _isTriggered = false;
+                _hasOppositeState = true;
+            }
+        }
+
+        public override async UniTask<bool> Run()
+        {
+            await UniTask.WaitUntil(() => _isTriggered);
             return true;
         }
     }

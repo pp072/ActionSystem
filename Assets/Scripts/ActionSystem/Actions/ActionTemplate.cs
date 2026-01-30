@@ -4,15 +4,12 @@ using UnityEngine;
 
 namespace ActionSystem
 {
-    [Serializable, ActionMenuPathAttribute("Template"), ActionName("Template")]
-    public class ActionTemplate : IActionItem
+    [Serializable, ActionMenuPath("Template/Template")]
+    public class ActionTemplate : ActionItemBase
     {
-        [HideInInspector]public string Name { get; set; } = "Template";
         [SerializeField] private float Delay;
-        public void Validate(int index) { }
-        public void Init(){}
 
-        public async UniTask<bool> Run()
+        public override async UniTask<bool> Run()
         {
             await Awaitable.WaitForSecondsAsync(Delay);
             return true;

@@ -35,7 +35,7 @@ namespace ActionSystem
         private IActionItem _actionItem;
         
         [Space]
-        [SerializeField] 
+        [SerializeField, HideIf(nameof(IsFlowControlAction)),OnValueChanged(nameof(OnValueChangedCallback)), AllowNesting]
         private bool AdvancedRunType = false;
         
         [SerializeField, ShowIf(nameof(AdvancedRunType)), AllowNesting] 
@@ -49,14 +49,23 @@ namespace ActionSystem
 
         public bool IsSkip => RunType == RunType.Skip;
         public bool IsRunTypeWaitUntil => RunType == RunType.Wait && AdvancedRunType;
-        public bool IsFinishTypeGoTo => FinishType ==  FinishType.GoTo;
+        public bool IsFinishTypeGoTo => FinishType == FinishType.GoTo;
+        public bool IsFlowControlAction => _actionItem is IFlowControlAction;
         public IActionItem ActionItem => _actionItem;
+        public bool IsInProgress { get; private set; }
         public RunType GetRunType => RunType;
         public FinishType GetFinishType => FinishType;
         public int GetGoTo => GoTo;
+        public void SetGoTo(int value) => GoTo = value;
         public string ActionName => _name;
         
         public List<ActionInfo> ActionNodesList { get; } = new List<ActionInfo>();
+        
+        private void OnValueChangedCallback()
+        {
+            RunType = RunType.Wait;
+            FinishType = FinishType.Continue;
+        }
         
         public DropdownList<int> GetAllActionsInfo()
         {
@@ -71,6 +80,10 @@ namespace ActionSystem
         public void Validate(int index)
         {
             if(_actionItem == null) return;
+
+            // Validate action item first to populate Name
+            _actionItem.Validate(index);
+
             var goTo = "";
             if (IsFinishTypeGoTo)
             {
@@ -84,18 +97,16 @@ namespace ActionSystem
             }
 
             _name = index + ": " + _actionItem.Name + (RunType == RunType.Skip ? "  SKIP" :"") + goTo;
-           
-            _actionItem.Validate(index);
         }
         
-        public void Init()
+        public void Init(ActionList context)
         {
-            _actionItem.Init();
+            _actionItem.Init(context);
         }
 
         public void SetInProgressState(bool state)
         {
-            _name = state ? _name.Replace(":", "* :") : _name.Replace("* :", ":");
+            IsInProgress = state;
         }
     }
 }

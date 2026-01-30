@@ -1,11 +1,7 @@
 using System;
-using System.Linq;
-using Actions;
 using Cysharp.Threading.Tasks;
 using NaughtyAttributes;
-using UnityEditor;
 using UnityEngine;
-using Variable;
 
 namespace ActionSystem
 {
@@ -14,141 +10,127 @@ namespace ActionSystem
     {
         Set,
         Get,
-        Modificate
+        Modify
     }
-    [Serializable, ActionMenuPathAttribute("Variable"), ActionName("Variable Get Set")]
-    public class ActionVariable : IActionItem
+
+    [Serializable, ActionMenuPath("Variable/Get Set")]
+    public class ActionVariable : ActionItemBase
     {
-        [HideInInspector]public string Name { get; set; } = "Variable Get Set";
-        [SerializeField]private VariablesScriptableObject VSO;
-        [Dropdown(nameof(GetAllVariables)), AllowNesting]
-        [SerializeField]private Variable.Variable _variable;
-        [SerializeField]private ActionVariableCommand _command;
-        [SerializeField, ShowIf(nameof(IsIntValue)) , AllowNesting]
-        private int _setIntVal;
-        [SerializeField, ShowIf(nameof(IsBoolValue)), AllowNesting]
-        private int _setBoolVal;
-        [SerializeField, ShowIf(nameof(IsFloatValue)), AllowNesting]
-        private int _setFloatVal;
-        [SerializeField, ShowIf(nameof(IsStringValue)), AllowNesting]
-        private int _setStringVal;
-        [SerializeField, ShowIf(nameof(_command), ActionVariableCommand.Modificate), AllowNesting] 
+        [SerializeField, AllowNesting]
+        private LocalVariableRef _targetVariable;
+
+        [SerializeField] private ActionVariableCommand _command;
+
+        [SerializeField, ShowIf(nameof(IsSetInt)), AllowNesting]
+        private IntRef _setIntVal;
+
+        [SerializeField, ShowIf(nameof(IsSetFloat)), AllowNesting]
+        private FloatRef _setFloatVal;
+
+        [SerializeField, ShowIf(nameof(IsSetBool)), AllowNesting]
+        private BoolRef _setBoolVal;
+
+        [SerializeField, ShowIf(nameof(IsSetString)), AllowNesting]
+        private StringRef _setStringVal;
+
+        [SerializeField, ShowIf(nameof(IsModifyCommand)), AllowNesting]
         private string _expression;
-        
+
+        [SerializeField, HideInInspector]
+        private LocalVariableType _cachedVariableType;
+
         private bool IsSetCommand => _command == ActionVariableCommand.Set;
-        private bool IsIntValue => IsSetCommand && _variable.Var.Value.Type == VariantType.Integer;
-        private bool IsBoolValue => IsSetCommand && _variable.Var.Value.Type == VariantType.Boolean;
-        private bool IsFloatValue => IsSetCommand && _variable.Var.Value.Type == VariantType.Float;
-        private bool IsStringValue => IsSetCommand && _variable.Var.Value.Type == VariantType.String;
+        private bool IsModifyCommand => _command == ActionVariableCommand.Modify;
+        private bool IsSetInt => IsSetCommand && _cachedVariableType == LocalVariableType.Integer;
+        private bool IsSetFloat => IsSetCommand && _cachedVariableType == LocalVariableType.Float;
+        private bool IsSetBool => IsSetCommand && _cachedVariableType == LocalVariableType.Boolean;
+        private bool IsSetString => IsSetCommand && _cachedVariableType == LocalVariableType.String;
 
-        
-
-        public DropdownList<Variable.Variable> GetAllVariables()
+        private LocalVariable GetTargetVariable()
         {
-            var list = new DropdownList<Variable.Variable>();
-            if (VSO == null)
-                return null;
-            foreach (var parameter in VSO.Variables)
-            {
-                list.Add($"[Var:{parameter.index}] {parameter.Name} {parameter.Var.Value.Type.ToString()} {parameter.Var.ValueToString()} " 
-                    , parameter);
-            }
-            return list;
+            return _targetVariable?.GetVariable(Context);
         }
 
-        public void Validate(int index)
+        public override void Validate(int index)
         {
-            if (VSO != null) return;
-            VariablesScriptableObject _instance = null;
-#if UNITY_EDITOR
-            var guid = AssetDatabase.FindAssets($"t:{typeof(VariablesScriptableObject).Name}").FirstOrDefault();
-            if (!string.IsNullOrEmpty(guid))
+            base.Validate(index);
+
+            // Auto-detect variable type from target
+            var variable = _targetVariable?.GetVariable(Context);
+            if (variable != null)
             {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                _instance = AssetDatabase.LoadAssetAtPath<VariablesScriptableObject>(path);
-            }
-#else
-                _instance =  Resources.Load<VariablesScriptableObject>("Prefabs");
-#endif
-            
-            if (_instance != null)
-            {
-                VSO = _instance;
+                _cachedVariableType = variable.Type;
             }
         }
-        public void Init() {}
-        
-        public VariantParameter Modificate(VariantParameter data)
+
+        public override async UniTask<bool> Run()
         {
-            switch (data.Value.Type)
-            {
-                case VariantType.Float:
-                {
-                    var finalExpression = data.Value.FloatValue + _expression;
-                    ExpressionEvaluator.Evaluate(finalExpression, out float result);
-                    data.SetValue(result);
-                    break;
-                }
-                case VariantType.Integer:
-                {
-                    var finalExpression = data.Value.IntValue + _expression;
-                    ExpressionEvaluator.Evaluate(finalExpression, out float result);
-                    data.SetValue(result);
-                    break;
-                }
-                default:
-                    return data;
-            }
-            return data;
-        }
-        
-        public async UniTask<bool> Run()
-        {
+            var variable = GetTargetVariable();
+            if (variable == null) return true;
+
             switch (_command)
             {
                 case ActionVariableCommand.Get:
-                    LogVariable();
+                    LogVariable(variable);
                     break;
+
                 case ActionVariableCommand.Set:
-                    switch (_variable.Var.Value.Type)
-                    {
-                        case VariantType.Integer:
-                            _variable.Var.SetValue(_setIntVal);
-                            LogVariable();
-                            break;
-                        case VariantType.Boolean:
-                            _variable.Var.SetValue(_setBoolVal);
-                            LogVariable();
-                            break;
-                        case VariantType.Float:
-                            _variable.Var.SetValue(_setFloatVal);
-                            LogVariable();
-                            break;
-                        case VariantType.String:
-                            _variable.Var.SetValue(_setStringVal);
-                            LogVariable();
-                            break;
-                        case VariantType.None:
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
+                    SetVariable(variable);
+                    LogVariable(variable);
                     break;
-                case ActionVariableCommand.Modificate:
-                {
-                    Modificate(_variable.Var);
-                    LogVariable();
+
+                case ActionVariableCommand.Modify:
+                    ModifyVariable(variable);
+                    LogVariable(variable);
                     break;
-                }
-                default:
-                    throw new ArgumentOutOfRangeException();
             }
 
             return true;
         }
 
-        private void LogVariable()
+        private void SetVariable(LocalVariable variable)
         {
-            Debug.Log($"Var:{_variable.index} {_variable.Name}  {_variable.Var.ValueToString()}");
+            switch (_cachedVariableType)
+            {
+                case LocalVariableType.Integer:
+                    variable.SetValue(_setIntVal.GetValue(Context));
+                    break;
+                case LocalVariableType.Float:
+                    variable.SetValue(_setFloatVal.GetValue(Context));
+                    break;
+                case LocalVariableType.Boolean:
+                    variable.SetValue(_setBoolVal.GetValue(Context));
+                    break;
+                case LocalVariableType.String:
+                    variable.SetValue(_setStringVal.GetValue(Context));
+                    break;
+            }
+        }
+
+        private void ModifyVariable(LocalVariable variable)
+        {
+            switch (_cachedVariableType)
+            {
+                case LocalVariableType.Float:
+                {
+                    var finalExpression = variable.GetFloat() + _expression;
+                    ExpressionEvaluator.Evaluate(finalExpression, out float result);
+                    variable.SetValue(result);
+                    break;
+                }
+                case LocalVariableType.Integer:
+                {
+                    var finalExpression = variable.GetInt() + _expression;
+                    ExpressionEvaluator.Evaluate(finalExpression, out float result);
+                    variable.SetValue((int)result);
+                    break;
+                }
+            }
+        }
+
+        private void LogVariable(LocalVariable variable)
+        {
+            Debug.Log($"Variable: {variable}");
         }
     }
 }

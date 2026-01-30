@@ -1,0 +1,16 @@
+using System;
+using UnityEngine;
+
+namespace ActionSystem
+{
+    public class TriggerListener : MonoBehaviour
+    {
+        public event Action<Collider> OnEnter;
+        public event Action<Collider> OnExit;
+        public event Action<Collider> OnStay;
+
+        private void OnTriggerEnter(Collider other) => OnEnter?.Invoke(other);
+        private void OnTriggerExit(Collider other) => OnExit?.Invoke(other);
+        private void OnTriggerStay(Collider other) => OnStay?.Invoke(other);
+    }
+}

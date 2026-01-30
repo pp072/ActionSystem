@@ -1,128 +1,224 @@
 using System;
-using Actions;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using NaughtyAttributes;
 using UnityEngine;
 
 namespace ActionSystem
 {
-    public enum ActionIfElseCommand
-    { 
+    public enum CompareOperator
+    {
         Greater,
-        Lower,
+        Less,
         Equal,
         NotEqual,
         GreaterOrEqual,
-        LowerOrEqual,
+        LessOrEqual,
     }
-    [Serializable, ActionMenuPathAttribute("Variable"), ActionName("Variable If Else")]
-    public class ActionIfElse : IActionItem
+
+    public enum CompareType
     {
-        [HideInInspector]public string Name { get; set; } = "Variable If Else";
-        
-        [InfoBox("IF", EInfoBoxType.Normal)]
-        [BoxGroup("Variable 1"), AllowNesting] [SerializeField]
-        private VariableField var1;
-        
-        [SerializeField] private ActionIfElseCommand _command;
-        
-        [BoxGroup("Variable 2"), AllowNesting] [SerializeField]
-        private VariableField var2;
-        
-        [SerializeField] private ActionList _TRUE;
-        [SerializeField] private ActionListCommand _actionListTrueCommand;
-        [SerializeField] private ActionList _FALSE;
-        [SerializeField] private ActionListCommand _actionListFalseCommand;
-        
-        public void Validate(int index) { }
-        public void Init() {}
-        
-        public async UniTask<bool> Run()
-        {
-            var result = false;
-            CompareStatement compare;
-            if (_command == ActionIfElseCommand.Greater)
-                compare = new CompareGreater { op1 = var1, op2 = var2 };
-            else if (_command == ActionIfElseCommand.Lower)
-                compare = new CompareLower { op1 = var1, op2 = var2 };
-            else if (_command == ActionIfElseCommand.Equal)
-                compare = new CompareEqual { op1 = var1, op2 = var2 };
-            else if (_command == ActionIfElseCommand.NotEqual)
-                compare = new CompareNotEqual { op1 = var1, op2 = var2 };
-            else if (_command == ActionIfElseCommand.GreaterOrEqual)
-                compare = new CompareGreaterOrEqual() { op1 = var1, op2 = var2 };
-            else if (_command == ActionIfElseCommand.LowerOrEqual)
-                compare = new CompareLowerOrEqual() { op1 = var1, op2 = var2 };
-            else
-                return true;
+        Int,
+        Float,
+        Bool,
+        String
+    }
 
-            var isSuccess = false;
-            
-            result = compare.GetResult();
-            if(result)
-                isSuccess = await RunActionList(_TRUE, _actionListTrueCommand);
-            else
-                isSuccess = await RunActionList(_FALSE, _actionListFalseCommand);
-            
-            return isSuccess;
-        }
+    public enum BranchType
+    {
+        Continue,
+        Stop,
+        GoTo
+    }
 
-        public async UniTask<bool> RunActionList(ActionList al, ActionListCommand command)
+    [Serializable, ActionMenuPath("Logic/If Else", 0.8f, 0.6f, 0.2f)]
+    public class ActionIfElse : ActionItemBase, IFlowControlAction
+    {
+        [SerializeField] private CompareType _compareType = CompareType.Int;
+
+        [ShowIf(nameof(IsIntCompare)), AllowNesting]
+        [SerializeField] private IntRef _intValue1;
+
+        [ShowIf(nameof(IsIntCompare)), AllowNesting]
+        [SerializeField] private CompareOperator _intOperator;
+
+        [ShowIf(nameof(IsIntCompare)), AllowNesting]
+        [SerializeField] private IntRef _intValue2;
+
+        [ShowIf(nameof(IsFloatCompare)), AllowNesting]
+        [SerializeField] private FloatRef _floatValue1;
+
+        [ShowIf(nameof(IsFloatCompare)), AllowNesting]
+        [SerializeField] private CompareOperator _floatOperator;
+
+        [ShowIf(nameof(IsFloatCompare)), AllowNesting]
+        [SerializeField] private FloatRef _floatValue2;
+
+        [ShowIf(nameof(IsBoolCompare)), AllowNesting]
+        [SerializeField] private BoolRef _boolValue1;
+
+        [ShowIf(nameof(IsBoolCompare)), AllowNesting]
+        [SerializeField] private BoolRef _boolValue2;
+
+        [ShowIf(nameof(IsStringCompare)), AllowNesting]
+        [SerializeField] private StringRef _stringValue1;
+
+        [ShowIf(nameof(IsStringCompare)), AllowNesting]
+        [SerializeField] private StringRef _stringValue2;
+
+        [BoxGroup("If TRUE"), AllowNesting]
+        [SerializeField] private BranchType _trueBranch = BranchType.Continue;
+
+        [BoxGroup("If TRUE"), AllowNesting]
+        [ShowIf(nameof(IsTrueGoTo))]
+        [Dropdown(nameof(GetAllActionsInfo))]
+        [SerializeField] private int _trueGoTo;
+
+        [BoxGroup("If FALSE"), AllowNesting]
+        [SerializeField] private BranchType _falseBranch = BranchType.Continue;
+
+        [BoxGroup("If FALSE"), AllowNesting]
+        [ShowIf(nameof(IsFalseGoTo))]
+        [Dropdown(nameof(GetAllActionsInfo))]
+        [SerializeField] private int _falseGoTo;
+
+        private bool _lastResult;
+
+        private bool IsIntCompare => _compareType == CompareType.Int;
+        private bool IsFloatCompare => _compareType == CompareType.Float;
+        private bool IsBoolCompare => _compareType == CompareType.Bool;
+        private bool IsStringCompare => _compareType == CompareType.String;
+        private bool IsTrueGoTo => _trueBranch == BranchType.GoTo;
+        private bool IsFalseGoTo => _falseBranch == BranchType.GoTo;
+
+        public List<ActionInfo> ActionNodesList { get; } = new();
+
+        public DropdownList<int> GetAllActionsInfo()
         {
-            var isSuccess = false;
-            switch (command)
+            var list = new DropdownList<int>();
+            foreach (var info in ActionNodesList)
             {
-                case ActionListCommand.Run:
-                    isSuccess = await al.Run();
-                    break;
-                case ActionListCommand.Continue:
-                    al.ContinueManually();
-                    break;
-                case ActionListCommand.Stop:
-                    al.Stop();
-                    break;
-                case ActionListCommand.RunAsync:
-                    isSuccess = true;
-                    al.RunManually();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
+                list.Add(info.name, info.index);
             }
-            return isSuccess;
+            return list;
+        }
+
+        public override void Validate(int index)
+        {
+            base.Validate(index);
+
+            string condition = _compareType switch
+            {
+                CompareType.Int => $"{_intValue1.GetDisplayName()} {GetOperatorSymbol(_intOperator)} {_intValue2.GetDisplayName()}",
+                CompareType.Float => $"{_floatValue1.GetDisplayName()} {GetOperatorSymbol(_floatOperator)} {_floatValue2.GetDisplayName()}",
+                CompareType.Bool => $"{_boolValue1.GetDisplayName()} == {_boolValue2.GetDisplayName()}",
+                CompareType.String => $"{_stringValue1.GetDisplayName()} == {_stringValue2.GetDisplayName()}",
+                _ => "?"
+            };
+
+            string trueResult = _trueBranch switch
+            {
+                BranchType.Continue => "→",
+                BranchType.Stop => "Stop",
+                BranchType.GoTo => $"→{_trueGoTo}",
+                _ => "?"
+            };
+
+            string falseResult = _falseBranch switch
+            {
+                BranchType.Continue => "→",
+                BranchType.Stop => "Stop",
+                BranchType.GoTo => $"→{_falseGoTo}",
+                _ => "?"
+            };
+
+            Name = $"If ({condition}) T:{trueResult} F:{falseResult}";
+        }
+
+        private string GetOperatorSymbol(CompareOperator op)
+        {
+            return op switch
+            {
+                CompareOperator.Greater => ">",
+                CompareOperator.Less => "<",
+                CompareOperator.Equal => "==",
+                CompareOperator.NotEqual => "!=",
+                CompareOperator.GreaterOrEqual => ">=",
+                CompareOperator.LessOrEqual => "<=",
+                _ => "?"
+            };
+        }
+
+        public override async UniTask<bool> Run()
+        {
+            _lastResult = _compareType switch
+            {
+                CompareType.Int => CompareInt(),
+                CompareType.Float => CompareFloat(),
+                CompareType.Bool => CompareBool(),
+                CompareType.String => CompareString(),
+                _ => true
+            };
+
+            return true;
+        }
+
+        private bool CompareInt()
+        {
+            int a = _intValue1.GetValue(Context);
+            int b = _intValue2.GetValue(Context);
+
+            return _intOperator switch
+            {
+                CompareOperator.Greater => a > b,
+                CompareOperator.Less => a < b,
+                CompareOperator.Equal => a == b,
+                CompareOperator.NotEqual => a != b,
+                CompareOperator.GreaterOrEqual => a >= b,
+                CompareOperator.LessOrEqual => a <= b,
+                _ => true
+            };
+        }
+
+        private bool CompareFloat()
+        {
+            float a = _floatValue1.GetValue(Context);
+            float b = _floatValue2.GetValue(Context);
+
+            return _floatOperator switch
+            {
+                CompareOperator.Greater => a > b,
+                CompareOperator.Less => a < b,
+                CompareOperator.Equal => Mathf.Approximately(a, b),
+                CompareOperator.NotEqual => !Mathf.Approximately(a, b),
+                CompareOperator.GreaterOrEqual => a >= b,
+                CompareOperator.LessOrEqual => a <= b,
+                _ => true
+            };
+        }
+
+        private bool CompareBool()
+        {
+            return _boolValue1.GetValue(Context) == _boolValue2.GetValue(Context);
+        }
+
+        private bool CompareString()
+        {
+            return _stringValue1.GetValue(Context) == _stringValue2.GetValue(Context);
+        }
+
+        public int GetNextIndex()
+        {
+            var branch = _lastResult ? _trueBranch : _falseBranch;
+            var goTo = _lastResult ? _trueGoTo : _falseGoTo;
+
+            return branch switch
+            {
+                BranchType.Continue => (int)FlowControlResult.Continue,
+                BranchType.Stop => (int)FlowControlResult.Stop,
+                BranchType.GoTo => goTo,
+                _ => (int)FlowControlResult.Continue
+            };
         }
     }
-    
-    #region compare gates
-    public abstract class CompareStatement
-    {
-        public bool GetResult() {  return Compare(op1.GetNumber(), op2.GetNumber()); }
-        public VariableField op1;
-        public VariableField op2;
-        protected abstract bool Compare(double aOp1, double aOp2);
-    }
-    public class CompareEqual : CompareStatement
-    {
-        protected override bool Compare(double aOp1, double aOp2) { return aOp1 == aOp2; }
-    }
-    public class CompareNotEqual : CompareStatement
-    {
-        protected override bool Compare(double aOp1, double aOp2) { return aOp1 != aOp2; }
-    }
-    public class CompareGreater : CompareStatement
-    {
-        protected override bool Compare(double aOp1, double aOp2) { return aOp1 > aOp2; }
-    }
-    public class CompareGreaterOrEqual : CompareStatement
-    {
-        protected override bool Compare(double aOp1, double aOp2) { return aOp1 >= aOp2; }
-    }
-    public class CompareLower : CompareStatement
-    {
-        protected override bool Compare(double aOp1, double aOp2) { return aOp1 < aOp2; }
-    }
-    public class CompareLowerOrEqual : CompareStatement
-    {
-        protected override bool Compare(double aOp1, double aOp2) { return aOp1 <= aOp2; }
-    }
-    #endregion compare gates
 }

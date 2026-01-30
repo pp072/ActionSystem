@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using System;
 using System.Collections.Generic;
+using ActionSystem.Editor;
 
 
 namespace ActionSystem
@@ -15,6 +16,9 @@ namespace ActionSystem
         {
             { typeof(ActionList), EditorGUIUtility.IconContent("AnimatorStateTransition Icon") },
         };
+
+        private static GUIContent _registryIcon = EditorGUIUtility.IconContent("d_Linked");
+        private static GUIContent _registryWarningIcon = EditorGUIUtility.IconContent("console.warnicon.sml");
 
         private static Dictionary<int, List<GUIContent>> _labeledObjects = new();
         private static HashSet<int> _unlabeledObjects = new();
@@ -72,6 +76,17 @@ namespace ActionSystem
                 }
             }
 
+            // Handle RegisterToRegistry with duplicate detection
+            var registry = go.GetComponent<RegisterToRegistry>();
+            if (registry != null)
+            {
+                bool hasDuplicate = RegisterToRegistryEditor.HasDuplicateKey(registry.Key);
+                var icon = hasDuplicate ? _registryWarningIcon : _registryIcon;
+                icon.tooltip = hasDuplicate
+                    ? $"RegisterToRegistry: \"{registry.Key}\" (DUPLICATE)"
+                    : $"RegisterToRegistry: \"{registry.Key}\"";
+                icons.Add(icon);
+            }
 
             var hasIcons = icons.Count > 0;
             if (hasIcons)

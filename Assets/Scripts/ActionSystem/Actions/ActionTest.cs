@@ -4,23 +4,17 @@ using UnityEngine;
 
 namespace ActionSystem
 {
-    [Serializable, ActionMenuPathAttribute("Test"), ActionName("Test")]
-    public class ActionTest : IActionItem
+    [Serializable, ActionMenuPath("Template/Test")]
+    public class ActionTest : ActionItemBase
     {
-        [HideInInspector]public string Name { get; set; } = "Enable Disable Object";
         [SerializeField] private GameObject _gameObject;
         [SerializeField] private Color _color;
         [SerializeField] private bool Enable = true;
-        [SerializeField] private FloatField  _floatField;
-        public void Validate(int index) { }
-        public void Init()
-        {
-            
-        }
+        //[SerializeField] private FloatField _floatField;
 
-        public async UniTask<bool> Run()
+        public override async UniTask<bool> Run()
         {
-            Debug.Log(_floatField.Value);
+            Debug.Log("test");
             //_gameObject.SetActive(Enable);
             return true;
         }

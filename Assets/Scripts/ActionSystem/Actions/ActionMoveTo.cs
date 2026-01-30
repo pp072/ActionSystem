@@ -6,60 +6,53 @@ using UnityEngine;
 
 namespace ActionSystem
 {
-    [Serializable, ActionMenuPathAttribute("Object"), ActionName("MoveTo")]
-    public class ActionMoveTo : IActionItem
+    [Serializable, ActionMenuPath("Object/Move To")]
+    public class ActionMoveTo : ActionItemBase
     {
-        [HideInInspector]public string Name { get; set; } = "MoveTo";
-        
-        [SerializeField] private Transform Object;
-        
-        [SerializeField] private bool Move;
-        [SerializeField, ShowIf(nameof(Move)), AllowNesting] 
-        private Transform MoveRef;
-        [SerializeField, ShowIf(nameof(IsShowMoveVector)), AllowNesting] 
-        private Vector3 MoveVector;
-        
-        [SerializeField] private bool Rotate;
-        [SerializeField, ShowIf(nameof(Rotate)), AllowNesting]
-        private Transform RotateRef;
-        [SerializeField, ShowIf(nameof(IsShowRotateVector)), AllowNesting]
-        private Vector3 RotateVector;
-        
-        [SerializeField] private bool Scale;
-        [SerializeField, ShowIf(nameof(Rotate)), AllowNesting]
-        private Transform ScaleRef;
-        [SerializeField, ShowIf(nameof(IsShowScaleVector)), AllowNesting]
-        private Vector3 ScaleVector;
-        
-        [SerializeField] private float Time;
+        [SerializeField] private TransformRef _object;
+
+        [SerializeField] private bool _move;
+        [SerializeField, ShowIf(nameof(_move)), AllowNesting]
+        private TransformRef _moveTarget;
+
+        [SerializeField] private bool _rotate;
+        [SerializeField, ShowIf(nameof(_rotate)), AllowNesting]
+        private TransformRef _rotateTarget;
+
+        [SerializeField] private bool _scale;
+        [SerializeField, ShowIf(nameof(_scale)), AllowNesting]
+        private TransformRef _scaleTarget;
+
+        [SerializeField] private FloatRef _time;
         [SerializeField] private Ease _ease = Ease.Linear;
-        
-        bool IsShowMoveVector =>Move && MoveRef == null ;
-        bool IsShowRotateVector =>Rotate && RotateRef == null ;
-        bool IsShowScaleVector =>Scale && ScaleRef == null ;
 
-        private bool isComplete = false;
-        public void Validate(int index) { }
-        public void Init(){}
-
-        public async UniTask<bool> Run()
+        public override async UniTask<bool> Run()
         {
-            if (Move)
+            var obj = _object.GetValue(Context);
+            if (obj == null) return true;
+
+            var time = _time.GetValue(Context);
+
+            if (_move)
             {
-                var newMoveVector = IsShowMoveVector ? MoveVector : MoveRef.position;
-                Object.DOMove(newMoveVector, Time).SetEase(_ease);
+                var moveTarget = _moveTarget.GetValue(Context);
+                if (moveTarget != null)
+                    obj.DOMove(moveTarget.position, time).SetEase(_ease);
             }
-            if (Rotate)
+            if (_rotate)
             {
-                var newRotateVector = IsShowRotateVector ? RotateVector : RotateRef.rotation.eulerAngles;
-                Object.DORotate(newRotateVector, Time).SetEase(_ease);
+                var rotateTarget = _rotateTarget.GetValue(Context);
+                if (rotateTarget != null)
+                    obj.DORotate(rotateTarget.rotation.eulerAngles, time).SetEase(_ease);
             }
-            if (Scale)
+            if (_scale)
             {
-                var newScaleVector = IsShowScaleVector ? ScaleVector : RotateRef.localScale;
-                Object.DOScale(newScaleVector, Time).SetEase(_ease);
+                var scaleTarget = _scaleTarget.GetValue(Context);
+                if (scaleTarget != null)
+                    obj.DOScale(scaleTarget.localScale, time).SetEase(_ease);
             }
-            await Awaitable.WaitForSecondsAsync(Time);
+
+            await Awaitable.WaitForSecondsAsync(time);
             return true;
         }
     }

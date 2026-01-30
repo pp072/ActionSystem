@@ -5,18 +5,12 @@ using UnityEngine.Events;
 
 namespace ActionSystem
 {
-    [Serializable, ActionMenuPathAttribute("Event"), ActionName("Send Event")]
-    public class ActionSetEvent : IActionItem
+    [Serializable, ActionMenuPath("Event/Send Event")]
+    public class ActionSetEvent : ActionItemBase
     {
-        public string Name { get; set; } = "Send Event";
         [SerializeField] private UnityEvent _floatDrivenTarget;
-        public void Validate(int index) { }
-        public void Init()
-        {
-            
-        }
 
-        public UniTask<bool> Run()
+        public override UniTask<bool> Run()
         {
             _floatDrivenTarget.Invoke();
             return UniTask.FromResult(true);

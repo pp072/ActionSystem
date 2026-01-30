@@ -4,23 +4,19 @@ using UnityEngine;
 
 namespace ActionSystem
 {
-    [Serializable, ActionMenuPathAttribute("Object"), ActionName("Enable Disable Object")]
-    public class ActionEnableObject : IActionItem
+    [Serializable, ActionMenuPath("Object/Enable Disable")]
+    public class ActionEnableObject : ActionItemBase
     {
-        [HideInInspector]public string Name { get; set; } = "Enable Disable Object";
-        [SerializeField] private GameObject _gameObject;
-        [SerializeField] private bool Enable = true;
+        [SerializeField] private GameObjectRef _gameObject;
+        [SerializeField] private BoolRef _enable;
 
-        public void Validate(int index) { }
-        public void Init()
+        public override async UniTask<bool> Run()
         {
-            
-        }
+            var go = _gameObject.GetValue(Context);
+            var enable = _enable.GetValue(Context);
 
-        public async UniTask<bool> Run()
-        {
-            if(_gameObject!=null)
-                _gameObject.SetActive(Enable);
+            if (go != null)
+                go.SetActive(enable);
             return true;
         }
     }

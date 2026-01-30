@@ -4,21 +4,17 @@ using UnityEngine;
 
 namespace ActionSystem
 {
-    [Serializable, ActionMenuPathAttribute("Debug"), ActionName("Debug Log")]
-    public class ActionDebugLog : IActionItem
+    [Serializable, ActionMenuPath("Debug/Debug Log")]
+    public class ActionDebugLog : ActionItemBase
     {
-        [HideInInspector]public string Name { get; set; } = "Debug Log";
-        public void Validate(int index) { }
-
-        [SerializeField] private string Debug;
+        [SerializeField] private StringRef Debug;
         [SerializeField] private bool Enable;
 
-        public void Init(){}
-
-        public async UniTask<bool> Run()
+        public override async UniTask<bool> Run()
         {
+            var text = Debug.GetValue(Context);
             if(Enable)
-                UnityEngine.Debug.Log(Debug);
+                UnityEngine.Debug.Log(text);
             return true;
         }
     }

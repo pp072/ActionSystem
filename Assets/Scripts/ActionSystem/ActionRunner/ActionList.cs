@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using NaughtyAttributes;
 using UnityEngine;
-using UnityEngine.Serialization;
+using Variable;
 
 namespace ActionSystem
 {
@@ -11,9 +11,43 @@ namespace ActionSystem
     public class ActionList : MonoBehaviour
     {
         [SerializeField] private bool _runOnAwake = false;
+        [SerializeField] private VariablesScriptableObject _globalVariables;
+        [SerializeField] private List<LocalVariable> _localVariables = new();
         [SerializeField] private List<Action> Actions = new();
         private bool Pause =  false;
         private bool Stopped = false;
+
+        public IReadOnlyList<LocalVariable> LocalVariables => _localVariables;
+        public VariablesScriptableObject GlobalVariables => _globalVariables;
+        public IReadOnlyList<Action> ActionsList => Actions;
+
+        public LocalVariable GetVariable(string name)
+        {
+            foreach (var variable in _localVariables)
+            {
+                if (variable.Name == name)
+                    return variable;
+            }
+            return null;
+        }
+
+        public LocalVariable GetVariable(int index)
+        {
+            if (index >= 0 && index < _localVariables.Count)
+                return _localVariables[index];
+            return null;
+        }
+
+        public T GetValue<T>(string name)
+        {
+            var variable = GetVariable(name);
+            if (variable == null) return default;
+
+            var value = variable.GetValue();
+            if (value is T typedValue)
+                return typedValue;
+            return default;
+        }
 
         [Button()]
         public void RunManually()
@@ -27,15 +61,18 @@ namespace ActionSystem
             Pause = false;
         }
         
-        [Button()]
-        public void ExpandAll()
-        {
-            //var listProp = serializedObject.FindProperty("_actionItems");
-        }
-        
         public void Stop()
         {
             Stopped = true;
+            CleanupAllActions();
+        }
+
+        private void CleanupAllActions()
+        {
+            foreach (var action in Actions)
+            {
+                action.ActionItem?.Cleanup();
+            }
         }
         
         public async UniTask<bool> Run(int index=0)
@@ -58,6 +95,21 @@ namespace ActionSystem
                         action.SetInProgressState(true);
                         isComplete = await action.ActionItem.Run();
                         action.SetInProgressState(false);
+
+                        // Check for flow control action (like If/Else)
+                        if (action.ActionItem is IFlowControlAction flowControl)
+                        {
+                            int nextIndex = flowControl.GetNextIndex();
+                            if (nextIndex == (int)FlowControlResult.Stop)
+                                return true;
+                            if (nextIndex >= 0)
+                            {
+                                Run(nextIndex).Forget();
+                                return true;
+                            }
+                            // Continue = -1, just continue to next action
+                            break;
+                        }
 
                         switch (action.GetFinishType)
                         {
@@ -99,32 +151,57 @@ namespace ActionSystem
         {
             foreach (var action in Actions)
             {
-                action.Init();
+                action.Init(this);
             }
 
             if (_runOnAwake)
                 RunManually();
         }
 
+        private void OnDestroy()
+        {
+            CleanupAllActions();
+        }
+
         private void OnValidate()
         {
+            // Build action info list for dropdowns
+            var actionInfoList = new List<ActionInfo>();
+            for (var i = 0; i < Actions.Count; i++)
+            {
+                actionInfoList.Add(new ActionInfo
+                {
+                    index = i,
+                    name = Actions[i].ActionName
+                });
+            }
+
             for (var index = 0; index < Actions.Count; index++)
             {
                 var action = Actions[index];
+
+                // Set context for editor-time validation
+                if (action.ActionItem != null)
+                    action.ActionItem.Context = this;
+
+                // Populate ActionNodesList for GoTo dropdown
                 if (action.IsFinishTypeGoTo)
                 {
                     action.ActionNodesList.Clear();
-                    for (var i = 0; i < Actions.Count; i++)
+                    action.ActionNodesList.AddRange(actionInfoList);
+                }
+
+                // Populate ActionNodesList for IFlowControlAction (like If/Else)
+                if (action.ActionItem is IFlowControlAction)
+                {
+                    var flowAction = action.ActionItem as ActionIfElse;
+                    if (flowAction != null)
                     {
-                        var actionInList = Actions[i];
-                        var actionInfo = new ActionInfo
-                        {
-                            index = i,
-                            name = actionInList.ActionName
-                        };
-                        action.ActionNodesList.Add(actionInfo);
+                        flowAction.ActionNodesList.Clear();
+                        flowAction.ActionNodesList.AddRange(actionInfoList);
                     }
                 }
+
                 action.Validate(index);
             }
         }

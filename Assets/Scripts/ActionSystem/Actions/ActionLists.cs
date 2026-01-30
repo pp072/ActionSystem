@@ -11,38 +11,40 @@ namespace ActionSystem
         Stop,
         Continue
     }
-    [Serializable, ActionMenuPathAttribute("Logic"), ActionName("ActionList")]
-    public class ActionLists : IActionItem
+
+    [Serializable, ActionMenuPath("Logic/Action List")]
+    public class ActionLists : ActionItemBase
     {
-        [HideInInspector]public string Name { get; set; } = "ActionList";
-        [SerializeField] private ActionList _actionList;
+        [SerializeField] private ComponentRef<ActionList> _actionList;
         [SerializeField] private ActionListCommand _actionListCommand;
 
-        public void Validate(int index) { }
-        public void Init(){}
-
-        public async UniTask<bool> Run()
+        public override async UniTask<bool> Run()
         {
+            var actionList = _actionList.GetValue(Context);
+            if (actionList == null) return true;
+
             var isSuccess = false;
             switch (_actionListCommand)
             {
                 case ActionListCommand.Run:
-                    isSuccess = await _actionList.Run();
+                    isSuccess = await actionList.Run();
                     break;
                 case ActionListCommand.Continue:
-                    _actionList.ContinueManually();
+                    actionList.ContinueManually();
+                    isSuccess = true;
                     break;
                 case ActionListCommand.Stop:
-                    _actionList.Stop();
+                    actionList.Stop();
+                    isSuccess = true;
                     break;
                 case ActionListCommand.RunAsync:
+                    actionList.RunManually();
                     isSuccess = true;
-                    _actionList.RunManually();
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-                
+
             return isSuccess;
         }
     }
