@@ -296,7 +296,7 @@ For collision and trigger actions, enable "Require State Transition" to:
 
 This prevents false detections when objects start in certain states.
 
-> [IMAGE: images/screenshot_17_trigger_action.png]
+![ActionTrigger configuration](images/screenshot_17_trigger_action.png)
 > Screenshot of ActionTrigger showing:
 > - Trigger Object reference
 > - Collision Type dropdown (Enter/Exit/Stay)
