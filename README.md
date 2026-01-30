@@ -67,8 +67,8 @@ ActionSystem is a node-based action sequencing framework that enables:
 1. Select a GameObject in your scene
 2. Add Component → ActionSystem → **ActionList**
 
-> [IMAGE: images/screenshot_01_empty_actionlist.png]
-> Screenshot of an empty ActionList component in the Inspector showing:
+![Empty ActionList component in the Inspector](images/screenshot_01_empty_actionlist.png)
+> Screenshot showing:
 > - Run On Awake checkbox
 > - Global Variables field
 > - Empty Local Variables array
@@ -80,8 +80,8 @@ ActionSystem is a node-based action sequencing framework that enables:
 2. Click **+** to add a new action slot
 3. Click the action type dropdown to select an action
 
-> [IMAGE: images/screenshot_02_action_dropdown.png]
-> Screenshot showing the action type dropdown menu expanded with all categories:
+![Action type dropdown menu](images/screenshot_02_action_dropdown.png)
+> Screenshot showing:
 > - Animation/ (Animator, Timeline Control)
 > - Audio/ (Audio Source)
 > - Logic/ (If Else, Variable)
@@ -96,8 +96,8 @@ Each action has its own parameters. Most parameters support two modes:
 - **Direct Value**: A fixed value you set
 - **Variable Reference**: Points to a local or global variable
 
-> [IMAGE: images/screenshot_03_action_configured.png]
-> Screenshot of an expanded ActionDelay showing:
+![ActionDelay configured](images/screenshot_03_action_configured.png)
+> Screenshot showing:
 > - Run Type dropdown set to "Delay"
 > - Duration field with Value/Variable toggle
 > - The direct value field showing "1.5"
@@ -143,13 +143,13 @@ Actions are the building blocks of sequences. Each action:
 
 ### Example: Door Opening Sequence
 
-> [IMAGE: images/screenshot_16_door_example.png]
-> Screenshot of a complete door opening sequence in the Inspector showing all 6 actions configured
+![Door opening sequence](images/screenshot_16_door_example.png)
+> Screenshot showing all 6 actions configured
 
 
 
 ### Example: Health-Based Animation
-[IMAGE: images/screenshot_17_health_example.png]
+![Health-based animation example](images/screenshot_17_health_example.png)
 
 
 ---
@@ -206,8 +206,8 @@ Variables scoped to a single ActionList. Perfect for:
 - Action-specific data
 - Loop counters
 
-> [IMAGE: images/screenshot_04_local_variables.png]
-> Screenshot of the Local Variables array expanded showing:
+![Local Variables array](images/screenshot_04_local_variables.png)
+> Screenshot showing:
 > - Multiple variables with different types (Float, Boolean, GameObject)
 > - Variable names and their values
 > - Type dropdown for each variable
@@ -222,8 +222,8 @@ Variables shared across multiple ActionLists via ScriptableObject:
 2. Assign to ActionList's "Global Variables" field
 3. Reference in actions using "Global" toggle
 
-> [IMAGE: images/screenshot_18_create_global_variables.png]
-> Screenshot showing the Unity Create menu expanded:
+![Create GlobalVariables menu](images/screenshot_18_create_global_variables.png)
+> Screenshot showing:
 > - Assets → Create → ActionSystem → GlobalVariables
 
 ### Variable Types
@@ -241,11 +241,11 @@ Variables shared across multiple ActionLists via ScriptableObject:
 
 Actions use "Ref" types that can be either direct values or variable references:
 
-> [IMAGE: images/screenshot_05_ref_value_mode.png]
+![FloatRef Value mode](images/screenshot_05_ref_value_mode.png)
 > Screenshot showing a FloatRef field in "Value" mode with direct input
 
-> [IMAGE: images/screenshot_06_ref_variable_mode.png]
-> Screenshot showing a FloatRef field in "Variable" mode with:
+![FloatRef Variable mode](images/screenshot_06_ref_variable_mode.png)
+> Screenshot showing:
 > - Local/Global toggle
 > - Variable name dropdown
 
@@ -265,8 +265,8 @@ Actions run one after another:
 
 ### Conditional Branching (If/Else)
 
-> [IMAGE: images/screenshot_07_ifelse_action.png]
-> Screenshot of ActionIfElse expanded showing:
+![ActionIfElse configuration](images/screenshot_07_ifelse_action.png)
+> Screenshot showing:
 > - Left value and Right value fields
 > - Comparison operator dropdown (>, <, ==, etc.)
 > - True branch settings (Continue/Stop/GoTo)
@@ -309,15 +309,15 @@ This prevents false detections when objects start in certain states.
 
 ### Inspector Features
 
-> [IMAGE: images/screenshot_08_full_inspector.png]
-> Screenshot of a complete ActionList inspector showing:
+![Full ActionList inspector](images/screenshot_08_full_inspector.png)
+> Screenshot showing:
 > - Top toolbar (Expand All, Collapse All, Show GoTo Arrows, Flow Window button)
 > - Multiple actions in the list
 > - GoTo arrows connecting actions
 > - Run Manually button at bottom
 
-> [IMAGE: images/screenshot_09_goto_arrows.png]
-> Screenshot highlighting the GoTo arrow visualization:
+![GoTo arrow visualization](images/screenshot_09_goto_arrows.png)
+> Screenshot showing:
 > - Blue arrows for regular GoTo
 > - Green arrows for If/Else true branch
 > - Red arrows for If/Else false branch
@@ -326,10 +326,10 @@ This prevents false detections when objects start in certain states.
 
 ### Action Controls
 
-> [IMAGE: images/screenshot_15_action_buttons.png]
-> Screenshot highlighting the action control buttons (▲ ▼ + ×) in the action header
+![Action control buttons](images/screenshot_15_action_buttons.png)
+> Screenshot showing the action control buttons (▲ ▼ + ×) in the action header
 
-> [GIF: images/gif_02_drag_reorder.gif]
+![Drag and drop reordering](images/gif_02_drag_reorder.gif)
 > Animated GIF showing drag-and-drop reordering of actions with visual drop indicator
 
 | Button | Function |
@@ -341,7 +341,7 @@ This prevents false detections when objects start in certain states.
 
 ### Visual Indicators
 
-> [IMAGE: images/screenshot_10_running_action.png]
+![Running action indicator](images/screenshot_10_running_action.png)
 
 | Indicator | Meaning |
 |-----------|---------|
@@ -364,7 +364,7 @@ Open via "Flow Window" button for a visual node graph:
 > - Currently executing node highlighted with green border
 > - Completed nodes vs pending nodes
 
-> [GIF: images/gif_01_flow_window_interaction.gif]
+![Flow Window interaction](images/gif_01_flow_window_interaction.gif)
 > Animated GIF showing:
 > - Dragging nodes to reposition
 > - Panning with middle mouse
