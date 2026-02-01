@@ -2,7 +2,8 @@
 
 A visual, data-driven action sequencing system for Unity that allows designers to create complex game logic without writing code.
 
-> **Screenshot placeholders** are marked with `[IMAGE: description]` throughout this document.
+![ActionIfElse configuration](images/screenshot_07_ifelse_action.png)
+
 
 ---
 
