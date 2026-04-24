@@ -83,7 +83,7 @@ namespace ActionSystem
         public T GetComponent<T>() where T : Component
         {
             // Try direct reference first
-            if (_componentValue is T typed)
+            if (_componentValue is T typed &&  typed != null)
                 return typed;
 
             if (!string.IsNullOrEmpty(_registryKey))
