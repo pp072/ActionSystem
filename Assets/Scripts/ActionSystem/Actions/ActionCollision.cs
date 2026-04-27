@@ -1,6 +1,5 @@
 using System;
 using Cysharp.Threading.Tasks;
-using NaughtyAttributes;
 using UnityEngine;
 
 namespace ActionSystem
@@ -8,11 +7,11 @@ namespace ActionSystem
     [Serializable, ActionMenuPath("Object/Collision")]
     public class ActionCollision : ActionItemBase
     {
-        [SerializeField] 
+        [SerializeField]
         private GameObjectRef _collisionObject;
-        [SerializeField] 
+        [SerializeField]
         private bool _detectCollideWithAll;
-        [SerializeField, HideIf(nameof(_detectCollideWithAll)), AllowNesting]
+        [SerializeField, HideIf(nameof(_detectCollideWithAll))]
         private ComponentRef<Collider> _specificCollider;
         [SerializeField] 
         private CollisionType _collisionType = CollisionType.Enter;

@@ -1,6 +1,5 @@
 using System;
 using Cysharp.Threading.Tasks;
-using NaughtyAttributes;
 using UnityEngine;
 
 namespace ActionSystem
@@ -16,24 +15,24 @@ namespace ActionSystem
     [Serializable, ActionMenuPath("Variable/Get Set")]
     public class ActionVariable : ActionItemBase
     {
-        [SerializeField, AllowNesting]
+        [SerializeField]
         private LocalVariableRef _targetVariable;
 
         [SerializeField] private ActionVariableCommand _command;
 
-        [SerializeField, ShowIf(nameof(IsSetInt)), AllowNesting]
+        [SerializeField, ShowIf(nameof(IsSetInt))]
         private IntRef _setIntVal;
 
-        [SerializeField, ShowIf(nameof(IsSetFloat)), AllowNesting]
+        [SerializeField, ShowIf(nameof(IsSetFloat))]
         private FloatRef _setFloatVal;
 
-        [SerializeField, ShowIf(nameof(IsSetBool)), AllowNesting]
+        [SerializeField, ShowIf(nameof(IsSetBool))]
         private BoolRef _setBoolVal;
 
-        [SerializeField, ShowIf(nameof(IsSetString)), AllowNesting]
+        [SerializeField, ShowIf(nameof(IsSetString))]
         private StringRef _setStringVal;
 
-        [SerializeField, ShowIf(nameof(IsModifyCommand)), AllowNesting]
+        [SerializeField, ShowIf(nameof(IsModifyCommand))]
         private string _expression;
 
         [SerializeField, HideInInspector]

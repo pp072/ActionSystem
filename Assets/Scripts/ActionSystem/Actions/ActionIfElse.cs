@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using NaughtyAttributes;
 using UnityEngine;
 
 namespace ActionSystem
@@ -36,48 +35,48 @@ namespace ActionSystem
     {
         [SerializeField] private CompareType _compareType = CompareType.Int;
 
-        [ShowIf(nameof(IsIntCompare)), AllowNesting]
+        [ShowIf(nameof(IsIntCompare))]
         [SerializeField] private IntRef _intValue1;
 
-        [ShowIf(nameof(IsIntCompare)), AllowNesting]
+        [ShowIf(nameof(IsIntCompare))]
         [SerializeField] private CompareOperator _intOperator;
 
-        [ShowIf(nameof(IsIntCompare)), AllowNesting]
+        [ShowIf(nameof(IsIntCompare))]
         [SerializeField] private IntRef _intValue2;
 
-        [ShowIf(nameof(IsFloatCompare)), AllowNesting]
+        [ShowIf(nameof(IsFloatCompare))]
         [SerializeField] private FloatRef _floatValue1;
 
-        [ShowIf(nameof(IsFloatCompare)), AllowNesting]
+        [ShowIf(nameof(IsFloatCompare))]
         [SerializeField] private CompareOperator _floatOperator;
 
-        [ShowIf(nameof(IsFloatCompare)), AllowNesting]
+        [ShowIf(nameof(IsFloatCompare))]
         [SerializeField] private FloatRef _floatValue2;
 
-        [ShowIf(nameof(IsBoolCompare)), AllowNesting]
+        [ShowIf(nameof(IsBoolCompare))]
         [SerializeField] private BoolRef _boolValue1;
 
-        [ShowIf(nameof(IsBoolCompare)), AllowNesting]
+        [ShowIf(nameof(IsBoolCompare))]
         [SerializeField] private BoolRef _boolValue2;
 
-        [ShowIf(nameof(IsStringCompare)), AllowNesting]
+        [ShowIf(nameof(IsStringCompare))]
         [SerializeField] private StringRef _stringValue1;
 
-        [ShowIf(nameof(IsStringCompare)), AllowNesting]
+        [ShowIf(nameof(IsStringCompare))]
         [SerializeField] private StringRef _stringValue2;
 
-        [BoxGroup("If TRUE"), AllowNesting]
+        [BoxGroup("If TRUE")]
         [SerializeField] private BranchType _trueBranch = BranchType.Continue;
 
-        [BoxGroup("If TRUE"), AllowNesting]
+        [BoxGroup("If TRUE")]
         [ShowIf(nameof(IsTrueGoTo))]
         [Dropdown(nameof(GetAllActionsInfo))]
         [SerializeField] private int _trueGoTo;
 
-        [BoxGroup("If FALSE"), AllowNesting]
+        [BoxGroup("If FALSE")]
         [SerializeField] private BranchType _falseBranch = BranchType.Continue;
 
-        [BoxGroup("If FALSE"), AllowNesting]
+        [BoxGroup("If FALSE")]
         [ShowIf(nameof(IsFalseGoTo))]
         [Dropdown(nameof(GetAllActionsInfo))]
         [SerializeField] private int _falseGoTo;
@@ -93,15 +92,7 @@ namespace ActionSystem
 
         public List<ActionInfo> ActionNodesList { get; } = new();
 
-        public DropdownList<int> GetAllActionsInfo()
-        {
-            var list = new DropdownList<int>();
-            foreach (var info in ActionNodesList)
-            {
-                list.Add(info.name, info.index);
-            }
-            return list;
-        }
+        public IReadOnlyList<ActionInfo> GetAllActionsInfo() => ActionNodesList;
 
         public override void Validate(int index)
         {

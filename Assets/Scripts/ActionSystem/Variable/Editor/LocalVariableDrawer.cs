@@ -33,11 +33,45 @@ namespace ActionSystem.Editor
             }
             else
             {
-                // Draw default property
-                EditorGUI.PropertyField(position, property, label, true);
+                // Manual drawing to show only the value field matching current type
+                DrawForNonScriptableObject(position, property, label, typeProp);
             }
 
             EditorGUI.EndProperty();
+        }
+
+        private void DrawForNonScriptableObject(Rect position, SerializedProperty property, GUIContent label, SerializedProperty typeProp)
+        {
+            float lineHeight = EditorGUIUtility.singleLineHeight;
+            float spacing = EditorGUIUtility.standardVerticalSpacing;
+
+            Rect foldoutRect = new Rect(position.x, position.y, position.width, lineHeight);
+            property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label, true);
+
+            if (property.isExpanded)
+            {
+                EditorGUI.indentLevel++;
+                float yOffset = lineHeight + spacing;
+
+                var nameProp = property.FindPropertyRelative("_name");
+                Rect nameRect = new Rect(position.x, position.y + yOffset, position.width, lineHeight);
+                EditorGUI.PropertyField(nameRect, nameProp);
+                yOffset += lineHeight + spacing;
+
+                Rect typeRect = new Rect(position.x, position.y + yOffset, position.width, lineHeight);
+                EditorGUI.PropertyField(typeRect, typeProp);
+                yOffset += lineHeight + spacing;
+
+                var currentType = (LocalVariableType)typeProp.enumValueIndex;
+                SerializedProperty valueProp = GetValueProperty(property, currentType);
+                if (valueProp != null)
+                {
+                    Rect valueRect = new Rect(position.x, position.y + yOffset, position.width, lineHeight);
+                    EditorGUI.PropertyField(valueRect, valueProp);
+                }
+
+                EditorGUI.indentLevel--;
+            }
         }
 
         private void DrawForScriptableObject(Rect position, SerializedProperty property, GUIContent label, SerializedProperty typeProp)
@@ -252,16 +286,11 @@ namespace ActionSystem.Editor
         {
             bool isInScriptableObject = property.serializedObject.targetObject is ScriptableObject;
 
-            if (isInScriptableObject)
-            {
-                if (!property.isExpanded)
-                    return EditorGUIUtility.singleLineHeight;
+            if (!property.isExpanded)
+                return EditorGUIUtility.singleLineHeight;
 
-                // Foldout + Name + Type + Value = 4 lines
-                return (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * 4;
-            }
-
-            return EditorGUI.GetPropertyHeight(property, label, true);
+            // Foldout + Name + Type + Value = 4 lines (same for both SO and non-SO)
+            return (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * 4;
         }
 
         private void HandleComponentDragAndDrop(Rect position, SerializedProperty componentProp)

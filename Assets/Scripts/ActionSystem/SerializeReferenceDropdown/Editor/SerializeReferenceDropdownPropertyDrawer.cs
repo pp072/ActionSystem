@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using ActionSystem;
 using SerializeReferenceDropdown.Editor.Utils;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
@@ -24,10 +25,21 @@ namespace SerializeReferenceDropdown.Editor
             var end = child.GetEndProperty();
 
             child.NextVisible(true);
+            string currentBox = null;
             while (!SerializedProperty.EqualContents(child, end))
             {
-                height += EditorGUI.GetPropertyHeight(child, true)
-                          + EditorGUIUtility.standardVerticalSpacing;
+                if (!ShouldDrawField(child, property.managedReferenceValue))
+                {
+                    child.NextVisible(false);
+                    continue;
+                }
+                string box = GetBoxGroup(child, property.managedReferenceValue);
+                if (box != currentBox)
+                {
+                    currentBox = box;
+                    if (box != null) height += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+                }
+                height += EditorGUI.GetPropertyHeight(child, true) + EditorGUIUtility.standardVerticalSpacing;
                 child.NextVisible(false);
             }
 
@@ -107,13 +119,34 @@ namespace SerializeReferenceDropdown.Editor
 
             line.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 
+            string currentBox = null;
             child.NextVisible(true);
             while (!SerializedProperty.EqualContents(child, end))
             {
+                if (!ShouldDrawField(child, property.managedReferenceValue))
+                {
+                    child.NextVisible(false);
+                    continue;
+                }
+
+                // BoxGroup label when group changes
+                string newBox = GetBoxGroup(child, property.managedReferenceValue);
+                if (newBox != currentBox)
+                {
+                    currentBox = newBox;
+                    if (newBox != null)
+                    {
+                        line.height = EditorGUIUtility.singleLineHeight;
+                        EditorGUI.LabelField(line, newBox, EditorStyles.boldLabel);
+                        line.y += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+                    }
+                }
+
                 var h = EditorGUI.GetPropertyHeight(child, true);
                 line.height = h;
 
-                EditorGUI.PropertyField(line, child, true);
+                if (!TryDrawDropdown(ref line, child, property.managedReferenceValue))
+                    EditorGUI.PropertyField(line, child, true);
 
                 line.y += h + EditorGUIUtility.standardVerticalSpacing;
                 child.NextVisible(false);
@@ -269,6 +302,67 @@ namespace SerializeReferenceDropdown.Editor
             property.serializedObject.ApplyModifiedProperties();
             property.serializedObject.Update();
             //property.isExpanded = true;
+        }
+
+        // ---- Conditional drawing helpers ----
+
+        private static bool ShouldDrawField(SerializedProperty child, object managedRef)
+        {
+            if (managedRef == null) return true;
+            var fi = managedRef.GetType().GetField(child.name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            if (fi == null) return true;
+            var showIf = fi.GetCustomAttribute<ShowIfAttribute>();
+            if (showIf != null) return EvalCondition(showIf.Condition, managedRef);
+            var hideIf = fi.GetCustomAttribute<HideIfAttribute>();
+            if (hideIf != null) return !EvalCondition(hideIf.Condition, managedRef);
+            return true;
+        }
+
+        private static bool EvalCondition(string name, object target)
+        {
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+            var type = target.GetType();
+            return (bool)(type.GetProperty(name, flags)?.GetValue(target)
+                ?? type.GetField(name, flags)?.GetValue(target)
+                ?? type.GetMethod(name, flags)?.Invoke(target, null)
+                ?? (object)true);
+        }
+
+        private static string GetBoxGroup(SerializedProperty child, object managedRef)
+        {
+            if (managedRef == null) return null;
+            var fi = managedRef.GetType().GetField(child.name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            return fi?.GetCustomAttribute<BoxGroupAttribute>()?.Name;
+        }
+
+        private static bool TryDrawDropdown(ref Rect line, SerializedProperty child, object managedRef)
+        {
+            if (managedRef == null) return false;
+            var fi = managedRef.GetType().GetField(child.name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            var dropdownAttr = fi?.GetCustomAttribute<DropdownAttribute>();
+            if (dropdownAttr == null) return false;
+
+            var method = managedRef.GetType().GetMethod(dropdownAttr.Provider, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            if (method == null) return false;
+
+            var items = method.Invoke(managedRef, null) as IReadOnlyList<ActionInfo>;
+            if (items == null || items.Count == 0) return false;
+
+            var labels = items.Select(x => x.name).ToArray();
+            var values = items.Select(x => x.index).ToArray();
+            int currentVal = child.intValue;
+            int currentIdx = Array.IndexOf(values, currentVal);
+            if (currentIdx < 0) currentIdx = 0;
+
+            float h = EditorGUIUtility.singleLineHeight;
+            line.height = h;
+            float lw = EditorGUIUtility.labelWidth;
+            EditorGUI.LabelField(new Rect(line.x, line.y, lw, h), ObjectNames.NicifyVariableName(child.name));
+            int newIdx = EditorGUI.Popup(new Rect(line.x + lw, line.y, line.width - lw, h), currentIdx, labels);
+            if (newIdx != currentIdx)
+                child.intValue = values[newIdx];
+
+            return true;
         }
     }
 }

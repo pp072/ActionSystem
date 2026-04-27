@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 using System.Reflection;
 using ActionSystem;
-using NaughtyAttributes.Editor;
 using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof(ActionList), true)]
-public class ActionItemInspector : NaughtyInspector
+public class ActionItemInspector : UnityEditor.Editor
 {
     // Track action order to detect reordering
     private List<int> _previousActionHashes = new();
@@ -25,7 +24,10 @@ public class ActionItemInspector : NaughtyInspector
         // Capture state before drawing
         CaptureActionState(listProp);
 
-        base.OnInspectorGUI();
+        serializedObject.UpdateIfRequiredOrScript();
+        DrawPropertiesExcluding(serializedObject, "m_Script");
+        serializedObject.ApplyModifiedProperties();
+
         serializedObject.Update();
 
         // Check if order changed and update GoTo indices
@@ -33,6 +35,16 @@ public class ActionItemInspector : NaughtyInspector
 
         // Draw expand/collapse buttons
         DrawExpandCollapseButtons(listProp);
+
+        // Draw Run / Continue buttons
+        GUILayout.Space(4);
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Run Manually"))
+                (target as ActionList)?.RunManually();
+            if (GUILayout.Button("Continue Manually"))
+                (target as ActionList)?.ContinueManually();
+        }
 
         // Draw arrows in foreground (after all properties are drawn)
         if (Event.current.type == EventType.Repaint)
@@ -42,7 +54,7 @@ public class ActionItemInspector : NaughtyInspector
 
         serializedObject.ApplyModifiedProperties();
     }
-    
+
     private void DrawExpandCollapseButtons(SerializedProperty listProp)
     {
         using (new EditorGUILayout.HorizontalScope())

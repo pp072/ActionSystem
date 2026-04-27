@@ -1,7 +1,5 @@
 using System;
 using Cysharp.Threading.Tasks;
-using DG.Tweening;
-using NaughtyAttributes;
 using UnityEngine;
 
 namespace ActionSystem
@@ -12,19 +10,19 @@ namespace ActionSystem
         [SerializeField] private TransformRef _object;
 
         [SerializeField] private bool _move;
-        [SerializeField, ShowIf(nameof(_move)), AllowNesting]
+        [SerializeField, ShowIf(nameof(_move))]
         private TransformRef _moveTarget;
 
         [SerializeField] private bool _rotate;
-        [SerializeField, ShowIf(nameof(_rotate)), AllowNesting]
+        [SerializeField, ShowIf(nameof(_rotate))]
         private TransformRef _rotateTarget;
 
         [SerializeField] private bool _scale;
-        [SerializeField, ShowIf(nameof(_scale)), AllowNesting]
+        [SerializeField, ShowIf(nameof(_scale))]
         private TransformRef _scaleTarget;
 
         [SerializeField] private FloatRef _time;
-        [SerializeField] private Ease _ease = Ease.Linear;
+        [SerializeField] private AnimationCurve _ease = AnimationCurve.Linear(0, 0, 1, 1);
 
         public override async UniTask<bool> Run()
         {
@@ -33,26 +31,29 @@ namespace ActionSystem
 
             var time = _time.GetValue(Context);
 
-            if (_move)
+            var startPos = obj.position;
+            var startRot = obj.rotation;
+            var startScale = obj.localScale;
+
+            Transform moveTarget = _move ? _moveTarget.GetValue(Context) : null;
+            Transform rotateTarget = _rotate ? _rotateTarget.GetValue(Context) : null;
+            Transform scaleTarget = _scale ? _scaleTarget.GetValue(Context) : null;
+
+            float elapsed = 0f;
+            while (elapsed < time)
             {
-                var moveTarget = _moveTarget.GetValue(Context);
-                if (moveTarget != null)
-                    obj.DOMove(moveTarget.position, time).SetEase(_ease);
-            }
-            if (_rotate)
-            {
-                var rotateTarget = _rotateTarget.GetValue(Context);
-                if (rotateTarget != null)
-                    obj.DORotate(rotateTarget.rotation.eulerAngles, time).SetEase(_ease);
-            }
-            if (_scale)
-            {
-                var scaleTarget = _scaleTarget.GetValue(Context);
-                if (scaleTarget != null)
-                    obj.DOScale(scaleTarget.localScale, time).SetEase(_ease);
+                elapsed += Time.deltaTime;
+                float t = _ease.Evaluate(Mathf.Clamp01(elapsed / time));
+                if (moveTarget != null) obj.position = Vector3.Lerp(startPos, moveTarget.position, t);
+                if (rotateTarget != null) obj.rotation = Quaternion.Lerp(startRot, rotateTarget.rotation, t);
+                if (scaleTarget != null) obj.localScale = Vector3.Lerp(startScale, scaleTarget.localScale, t);
+                await UniTask.Yield();
             }
 
-            await Awaitable.WaitForSecondsAsync(time);
+            if (moveTarget != null) obj.position = moveTarget.position;
+            if (rotateTarget != null) obj.rotation = rotateTarget.rotation;
+            if (scaleTarget != null) obj.localScale = scaleTarget.localScale;
+
             return true;
         }
     }

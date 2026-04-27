@@ -1,6 +1,5 @@
 using System;
 using Cysharp.Threading.Tasks;
-using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -20,7 +19,7 @@ namespace ActionSystem
         [SerializeField] private ComponentRef<PlayableDirector> _playableDirector;
         [SerializeField] private TimelineControlType _controlType;
         [SerializeField] private bool _setStartTime;
-        [SerializeField, ShowIf(nameof(_setStartTime)), AllowNesting]
+        [SerializeField, ShowIf(nameof(_setStartTime))]
         private FloatRef _startTime;
         [SerializeField] private bool _waitForFinish;
 

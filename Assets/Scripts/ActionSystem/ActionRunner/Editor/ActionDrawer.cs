@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -190,21 +191,52 @@ namespace ActionSystem.Editor
                 Rect contentRect = new Rect(position.x, position.y + lineHeight + 2f, position.width, position.height - lineHeight - 2f);
 
                 EditorGUI.indentLevel++;
-                var childProp = property.Copy();
-                var endProp = childProp.GetEndProperty();
-                childProp.NextVisible(true);
-
                 float yOffset = 0;
-                while (!SerializedProperty.EqualContents(childProp, endProp))
-                {
-                    float propHeight = EditorGUI.GetPropertyHeight(childProp, true);
-                    Rect propRect = new Rect(contentRect.x, contentRect.y + yOffset, contentRect.width, propHeight);
-                    EditorGUI.PropertyField(propRect, childProp, true);
-                    yOffset += propHeight + 2f;
 
-                    if (!childProp.NextVisible(false))
-                        break;
+                // 1. _actionItem — disabled when Skip
+                var actionItemDrawProp = property.FindPropertyRelative("_actionItem");
+                if (actionItemDrawProp != null)
+                {
+                    using (new EditorGUI.DisabledScope(isSkip))
+                        DrawProp(contentRect, actionItemDrawProp, ref yOffset);
                 }
+
+                // 2. AdvancedRunType — hidden for IFlowControlAction
+                bool isFlowControl = actionItemProp?.managedReferenceValue is IFlowControlAction;
+                if (!isFlowControl)
+                {
+                    var advProp = property.FindPropertyRelative("AdvancedRunType");
+                    if (advProp != null)
+                    {
+                        bool oldVal = advProp.boolValue;
+                        DrawProp(contentRect, advProp, ref yOffset);
+                        if (advProp.boolValue != oldVal)
+                        {
+                            property.FindPropertyRelative("RunType").enumValueIndex = 0;
+                            property.FindPropertyRelative("FinishType").enumValueIndex = 0;
+                            property.serializedObject.ApplyModifiedProperties();
+                        }
+                    }
+                }
+
+                // 3. RunType — shown only when AdvancedRunType is true
+                if (isAdvanced)
+                {
+                    var rtProp = property.FindPropertyRelative("RunType");
+                    if (rtProp != null) DrawProp(contentRect, rtProp, ref yOffset);
+                }
+
+                // 4. FinishType — shown only when Wait + Advanced
+                if (isAdvanced && isWait)
+                {
+                    var ftProp = property.FindPropertyRelative("FinishType");
+                    if (ftProp != null) DrawProp(contentRect, ftProp, ref yOffset);
+                }
+
+                // 5. GoTo — shown only when FinishType == GoTo, drawn as Popup
+                if (isGoTo)
+                    DrawGoToPopup(contentRect, property, goToProp, ref yOffset, index);
+
                 EditorGUI.indentLevel--;
             }
 
@@ -384,20 +416,58 @@ namespace ActionSystem.Editor
 
             if (property.isExpanded)
             {
-                var childProp = property.Copy();
-                var endProp = childProp.GetEndProperty();
-                childProp.NextVisible(true);
+                var actionItemProp = property.FindPropertyRelative("_actionItem");
+                var advancedProp = property.FindPropertyRelative("AdvancedRunType");
+                var runTypeProp = property.FindPropertyRelative("RunType");
+                var finishTypeProp = property.FindPropertyRelative("FinishType");
 
-                while (!SerializedProperty.EqualContents(childProp, endProp))
-                {
-                    height += EditorGUI.GetPropertyHeight(childProp, true) + 2f;
-                    if (!childProp.NextVisible(false))
-                        break;
-                }
+                bool isFlowControl = actionItemProp?.managedReferenceValue is IFlowControlAction;
+                bool isAdv = advancedProp?.boolValue ?? false;
+                bool isWaitRT = runTypeProp?.enumValueIndex == 0;
+                bool isGoToFT = finishTypeProp?.enumValueIndex == 3;
+
+                if (actionItemProp != null) height += EditorGUI.GetPropertyHeight(actionItemProp, true) + 2f;
+                if (!isFlowControl && advancedProp != null) height += EditorGUI.GetPropertyHeight(advancedProp, true) + 2f;
+                if (isAdv && runTypeProp != null) height += EditorGUI.GetPropertyHeight(runTypeProp, true) + 2f;
+                if (isAdv && isWaitRT && finishTypeProp != null) height += EditorGUI.GetPropertyHeight(finishTypeProp, true) + 2f;
+                if (isAdv && isWaitRT && isGoToFT) height += EditorGUIUtility.singleLineHeight + 2f;
                 height += 4f;
             }
 
             return height;
+        }
+
+        private static void DrawProp(Rect parent, SerializedProperty p, ref float yOffset)
+        {
+            float h = EditorGUI.GetPropertyHeight(p, true);
+            EditorGUI.PropertyField(new Rect(parent.x, parent.y + yOffset, parent.width, h), p, true);
+            yOffset += h + 2f;
+        }
+
+        private static void DrawGoToPopup(Rect parent, SerializedProperty property, SerializedProperty goToProp, ref float yOffset, int index)
+        {
+            var actionList = property.serializedObject.targetObject as ActionList;
+            var actions = actionList?.ActionsList;
+            if (actions == null || index < 0 || index >= actions.Count) return;
+
+            var nodesList = actions[index].ActionNodesList;
+            if (nodesList == null || nodesList.Count == 0) return;
+
+            var labels = nodesList.Select(n => n.name).ToArray();
+            var values = nodesList.Select(n => n.index).ToArray();
+            int currentVal = goToProp.intValue;
+            int currentIdx = Array.IndexOf(values, currentVal);
+            if (currentIdx < 0) currentIdx = 0;
+
+            float h = EditorGUIUtility.singleLineHeight;
+            Rect rect = new Rect(parent.x, parent.y + yOffset, parent.width, h);
+            float lw = EditorGUIUtility.labelWidth;
+            EditorGUI.LabelField(new Rect(rect.x, rect.y, lw, h), "Go To");
+            int newIdx = EditorGUI.Popup(new Rect(rect.x + lw, rect.y, rect.width - lw, h), currentIdx, labels);
+            if (newIdx != currentIdx)
+                goToProp.intValue = values[newIdx];
+
+            yOffset += h + 2f;
         }
 
         private SerializedProperty GetParentArrayProperty(SerializedProperty property)

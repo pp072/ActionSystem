@@ -1,5 +1,4 @@
 using System;
-using NaughtyAttributes;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -21,22 +20,22 @@ namespace ActionSystem
         [SerializeField] private string _name = "Variable";
         [SerializeField] private LocalVariableType _type = LocalVariableType.GameObject;
 
-        [SerializeField, ShowIf(nameof(IsGameObject)), AllowNesting]
+        [SerializeField, ShowIf(nameof(IsGameObject))]
         private GameObject _gameObjectValue;
 
-        [SerializeField, ShowIf(nameof(IsComponent)), AllowNesting]
+        [SerializeField, ShowIf(nameof(IsComponent))]
         private Component _componentValue;
 
-        [SerializeField, ShowIf(nameof(IsInteger)), AllowNesting]
+        [SerializeField, ShowIf(nameof(IsInteger))]
         private int _intValue;
 
-        [SerializeField, ShowIf(nameof(IsFloat)), AllowNesting]
+        [SerializeField, ShowIf(nameof(IsFloat))]
         private float _floatValue;
 
-        [SerializeField, ShowIf(nameof(IsBoolean)), AllowNesting]
+        [SerializeField, ShowIf(nameof(IsBoolean))]
         private bool _boolValue;
 
-        [SerializeField, ShowIf(nameof(IsString)), AllowNesting]
+        [SerializeField, ShowIf(nameof(IsString))]
         private string _stringValue;
 
         // Registry key for global variables (ScriptableObject can't hold scene references)

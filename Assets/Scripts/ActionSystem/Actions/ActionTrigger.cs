@@ -1,6 +1,5 @@
 using System;
 using Cysharp.Threading.Tasks;
-using NaughtyAttributes;
 using UnityEngine;
 
 namespace ActionSystem
@@ -17,7 +16,7 @@ namespace ActionSystem
     {
         [SerializeField] private GameObjectRef _triggerObject;
         [SerializeField] private bool _detectCollideWithAll;
-        [SerializeField, HideIf(nameof(_detectCollideWithAll)),AllowNesting] 
+        [SerializeField, HideIf(nameof(_detectCollideWithAll))]
         private ComponentRef<Collider> _specificCollider;
         [SerializeField] private CollisionType _collisionType = CollisionType.Enter;
         [SerializeField, Tooltip("If true, Exit requires Enter first, and Enter requires Exit first")]

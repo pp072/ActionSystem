@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using NaughtyAttributes;
 using UnityEngine;
 
 namespace ActionSystem
@@ -19,32 +18,26 @@ namespace ActionSystem
         GoTo
     }
 
-    public struct ActionInfo
-    {
-        public int index;
-        public string name;
-    }
-    
     [Serializable]
     public class Action
     {
         [SerializeReference, HideInInspector]
         private string _name = "";
-        
-        [SerializeReference, SerializeReferenceDropdown, DisableIf(nameof(IsSkip)), AllowNesting ]
+
+        [SerializeReference, SerializeReferenceDropdown]
         private IActionItem _actionItem;
-        
+
         [Space]
-        [SerializeField, HideIf(nameof(IsFlowControlAction)),OnValueChanged(nameof(OnValueChangedCallback)), AllowNesting]
+        [SerializeField]
         private bool AdvancedRunType = false;
-        
-        [SerializeField, ShowIf(nameof(AdvancedRunType)), AllowNesting] 
+
+        [SerializeField]
         private RunType RunType = RunType.Wait;
-        
-        [SerializeField, ShowIf(nameof(IsRunTypeWaitUntil)), AllowNesting] 
+
+        [SerializeField]
         private FinishType FinishType = FinishType.Continue;
 
-        [SerializeField, Dropdown(nameof(GetAllActionsInfo)), ShowIf(nameof(IsFinishTypeGoTo)), AllowNesting]
+        [SerializeField]
         private int GoTo;
 
         public bool IsSkip => RunType == RunType.Skip;
@@ -58,25 +51,9 @@ namespace ActionSystem
         public int GetGoTo => GoTo;
         public void SetGoTo(int value) => GoTo = value;
         public string ActionName => _name;
-        
+
         public List<ActionInfo> ActionNodesList { get; } = new List<ActionInfo>();
-        
-        private void OnValueChangedCallback()
-        {
-            RunType = RunType.Wait;
-            FinishType = FinishType.Continue;
-        }
-        
-        public DropdownList<int> GetAllActionsInfo()
-        {
-            var list = new DropdownList<int>();
-            foreach (var parameter in ActionNodesList)
-            {
-                list.Add(parameter.name 
-                    , parameter.index);
-            }
-            return list;
-        }
+
         public void Validate(int index)
         {
             if(_actionItem == null) return;

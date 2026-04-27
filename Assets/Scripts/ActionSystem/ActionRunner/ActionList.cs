@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using NaughtyAttributes;
 using UnityEngine;
 using Variable;
 
@@ -49,13 +48,11 @@ namespace ActionSystem
             return default;
         }
 
-        [Button()]
         public void RunManually()
         {
             Run().Forget();
         }
-        
-        [Button()]
+
         public void ContinueManually()
         {
             Pause = false;
